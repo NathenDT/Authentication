@@ -1,0 +1,28 @@
+.TextInputParent-DIV {
+  width: 100%;
+  height: 1.5em;
+  margin: 0.25em;
+  margin-bottom: 2em;
+
+  input {
+    padding: 1em 0em 1em 0em; 
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+  }
+
+  input:focus {
+    outline-color: blue;
+  }
+
+  p {
+    margin: 0px;
+    color: red;
+  }
+
+  span {
+    position: absolute;
+    transform: translate(-3em, 0.25em);
+    user-select: none;
+  }
+}
