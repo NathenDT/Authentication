@@ -12,15 +12,15 @@ const
     host: '127.0.0.1',
     port: 3306,
     user: 'root',
-    password: 'password',
+    password: '*Password*', // Enter Password
     database: 'users'
   },
   googleCloudClientID: string = '491128102264-1usoevnu2jg73jc27867iosouk1ti4cu.apps.googleusercontent.com',
   eMailINFO: any = {
     service: "gmail",
     auth: {
-      user: 'nathensauthentication@gmail.com',
-      pass: 'authentication'
+      user: '*Email*', // Enter Email
+      pass: '*Password*' // Enter Password
     }
   }
 
