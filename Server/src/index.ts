@@ -1,71 +1,73 @@
+import cors from 'cors'
 import express from 'express'
-import fs from 'fs'
-import mysql from 'mysql'
-import path from 'path'
-import * as googleAuthLibrary from 'google-auth-library'
+import { createConnection } from 'mysql2/promise'
+import nodemailer from 'nodemailer'
 
-const
-  PORT: number = 5000,
-  JWTSecretKey: string = 'rhPrVBLkVdsCepUtdAyOUDvZxldRUkwj',
-  BCRYPTSaltRounds: number = 10,
-  MySQLINFO: any = {
-    host: '127.0.0.1',
-    port: 3306,
-    user: 'root',
-    password: '*Password*', // Enter Password
-    database: 'users'
-  },
-  googleCloudClientID: string = '491128102264-1usoevnu2jg73jc27867iosouk1ti4cu.apps.googleusercontent.com',
-  eMailINFO: any = {
-    service: "gmail",
+import forgotPasswordChangePassword from './routes/v1/forgotPassword/changePassword'
+import forgotPasswordRequest from './routes/v1/forgotPassword/request'
+import deleteUser from './routes/v1/user/delete'
+import getWithToken from './routes/v1/user/get/withToken'
+import getWithUsername from './routes/v1/user/get/withUsername'
+import logIn from './routes/v1/user/logIn'
+import signUp from './routes/v1/user/signUp'
+import update from './routes/v1/user/update'
+import updatePassword from './routes/v1/user/update/password'
+
+require('dotenv').config()
+
+const PORT = parseInt(process.env.PORT!, 10)
+const MY_SQL_URL = process.env.MY_SQL_URL as string
+
+;(async function () {
+  const database = await createConnection(MY_SQL_URL)
+  const app = express()
+  const emailTransport = nodemailer.createTransport({
+    service: 'gmail',
     auth: {
-      user: '*Email*', // Enter Email
-      pass: '*Password*' // Enter Password
-    }
-  }
+      user: 'nathendtauthentication@gmail.com',
+      pass: 'rzderatxqozrarlt',
+    },
+  })
 
-const
-  app = express(),
-  database = mysql.createConnection(MySQLINFO),
-  googleClient = new googleAuthLibrary.OAuth2Client(googleCloudClientID)
+  app.use(express.json())
+  app.use(
+    cors({
+      origin: 'http://localhost:3000',
+      credentials: true,
+      optionsSuccessStatus: 200,
+    })
+  )
 
-export {
-  app,
-  database,
-  googleClient,
-  JWTSecretKey,
-  BCRYPTSaltRounds,
-  MySQLINFO,
-  googleCloudClientID,
-  eMailINFO
-}
+  forgotPasswordChangePassword(
+    '/v1/forgotpassword/changePassword',
+    app,
+    database
+  )
+  forgotPasswordRequest(
+    '/v1/forgotpassword/request',
+    app,
+    database,
+    emailTransport
+  )
+  deleteUser('/v1/user/delete', app, database)
+  getWithToken('/v1/user/get/withtoken', app, database)
+  getWithUsername('/v1/user/get/withusername', app, database)
+  signUp('/v1/user/signup', app, database)
+  logIn('/v1/user/login', app, database)
+  update('/v1/user/update', app, database)
+  updatePassword('/v1/user/update/password', app, database)
 
-app.use(express.json())
+  app.get('/', (_, res) => {
+    res.redirect('http://localhost:3000/login')
+  })
 
-const APIDirName = path.join(__dirname, 'api')
-startAPIS(APIDirName)
+  app.get('*', (_, res) => {
+    res.redirect('http://localhost:3000/login')
+  })
 
-app.listen(PORT, () => console.log('Listening on port:', PORT))
+  app.listen(PORT, () => {
+    console.log('Listening on Port:', PORT)
 
-database.connect((err) => {
-  if(err) return console.error('Can Not Connect to SQL Database', {err})
-  console.log('Connected To SQL Database')
-})
-
-function startAPIS(_dirPath: string, _APIPath: string = '/api') {
-  const apiFiles: string[] = fs.readdirSync(_dirPath)
-
-  for(let fileName of apiFiles) {
-    if(fileName.endsWith('.ts')) {
-      const APIPath: string = _APIPath + '/' + fileName.slice(0, -3)
-      const { api } = require(path.join(_dirPath, fileName))
-
-      api(APIPath)
-    } else {
-      const newAPIDirPath: string = path.join(_dirPath, fileName)
-      const APIPath: string = _APIPath + '/' + fileName
-
-      startAPIS(newAPIDirPath, APIPath)
-    }
-  }
-}
+    console.log('Connected to Database:', database.config.database)
+  })
+})()

@@ -1,78 +1,50 @@
 import { useState } from 'react'
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route
-} from 'react-router-dom'
+import { Navigate, Route } from 'react-router-dom'
 
-import Main from './pages/Main'
+import Wrapper from './components/Wrapper'
+import ChangePassword from './pages/ChangePassword'
+import Home from './pages/Home'
+import LogIn from './pages/LogIn'
+import NotFound from './pages/NotFound'
 import Settings from './pages/Settings'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import Error from './pages/Error'
+import SignUp from './pages/SignUp'
+import User from './pages/User'
 
-import './App.scss'
-
-const testEmail: RegExp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
-const googleClientID: string = '491128102264-1usoevnu2jg73jc27867iosouk1ti4cu.apps.googleusercontent.com'
-
-function App(): JSX.Element {
-  const
-    [token, setToken] = useState(localStorage.token),
-    [currentMainPage, changeMainPage] = useState(token ? 0 : 1),
-    [googleOAuthToken, setGoogleOAuthToken] = useState('')
-
-  const changeToken = (_token: string, rememberMe: boolean = false) => {
-    setToken(_token)
-
-    if(!_token) return localStorage.removeItem('token')
-
-    if(rememberMe) localStorage.setItem('token', _token)
-  }
+export default function App() {
+  const [token, setToken] = useState(
+    (localStorage.getItem('token') as string) || ''
+  )
 
   return (
-    <Router>
-      <Switch>
-        <Route exact path='/'>
-          <Main
-            token = { token }
-            changeToken = { changeToken }
-            currentMainPage = { currentMainPage }
-            changeMainPage = { changeMainPage }
-            googleOAuthToken = { googleOAuthToken }
-            setGoogleOAuthToken = { setGoogleOAuthToken }
-          />
-        </Route>
+    <Wrapper token={token} setToken={setToken}>
+      <Route
+        path="/"
+        element={Boolean(token) ? <Home /> : <Navigate to="/login" />}
+      />
 
-        <Route path='/settings'>
-          <Settings
-            token = { token }
-            changeToken = { changeToken }
-            changeMainPage = { changeMainPage }
-          />
-        </Route>
+      <Route
+        path="/login"
+        element={Boolean(token) ? <Navigate to="/" /> : <LogIn />}
+      />
 
-        <Route path='/forgotpassword'>
-          <ForgotPassword
-          />
-        </Route>
+      <Route
+        path="/signup"
+        element={Boolean(token) ? <Navigate to="/" /> : <SignUp />}
+      />
 
-        <Route path='/resetpassword/:token'>
-          <ResetPassword
-          />
-        </Route>
+      <Route
+        path="/settings"
+        element={Boolean(token) ? <Settings /> : <Navigate to="/login" />}
+      />
 
-        <Route path='*'>
-          <Error />
-        </Route>
-      </Switch>
-    </Router>
+      <Route path="/user" element={<User />} />
+
+      <Route
+        path="/changepassword"
+        element={Boolean(token) ? <Navigate to="/" /> : <ChangePassword />}
+      />
+
+      <Route path="*" element={<NotFound />} />
+    </Wrapper>
   )
-}
-
-export default App
-
-export {
-  testEmail,
-  googleClientID
 }

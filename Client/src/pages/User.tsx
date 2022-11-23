@@ -1,18 +1,17 @@
 import Skeleton from '@mui/material/Skeleton'
+import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 
 import { useContext, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
-import {
-  LoadingContext,
-  TokenContext,
-  WrapperTitleContext,
-} from '../utils/context'
+import { LoadingContext, WrapperTitleContext } from '../utils/context'
 
-export default function Home() {
-  const [token, setToken] = useContext(TokenContext)
+export default function User() {
+  const [searchParams] = useSearchParams()
+
   const [loading, setLoading] = useContext(LoadingContext)
-  const [, setTitleContext] = useContext(WrapperTitleContext)
+  const [, setWrapperTitle] = useContext(WrapperTitleContext)
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -20,24 +19,20 @@ export default function Home() {
 
   useEffect(() => {
     ;(async function () {
-      setTitleContext('Home')
       setLoading(true)
+      setWrapperTitle('User')
 
-      const response = await fetch('/v1/user/get/withtoken', {
-        method: 'GET',
-        headers: new Headers({
-          Authorization: token,
-        }),
-      })
+      const username = searchParams.get('username')
+
+      const response = await fetch(
+        'http://localhost:8080/v1/user/get/withusername?username=' + username
+      )
 
       const json = await response.json()
 
       setLoading(false)
 
-      if (!response.ok) {
-        setToken('')
-        return localStorage.removeItem('token')
-      }
+      if (!response.ok) return console.error(json)
 
       setFirstName(json.first_name)
       setLastName(json.last_name)
@@ -46,18 +41,16 @@ export default function Home() {
   }, [])
 
   return (
-    <>
-      <Typography variant="h1" color="text.primary" margin={1} padding={1}>
-        Hello
+    <Stack width="100%">
+      <Typography variant="h2" color="text.primary" margin={1} padding={1}>
+        Say Hello to
       </Typography>
-
       <Typography variant="h3" color="text.primary" margin={1} padding={1}>
         {loading ? <Skeleton /> : `${firstName} ${lastName}`}
       </Typography>
-
       <Typography variant="h4" color="text.primary" margin={1} padding={1}>
         {loading ? <Skeleton /> : `(${username})`}
       </Typography>
-    </>
+    </Stack>
   )
 }
