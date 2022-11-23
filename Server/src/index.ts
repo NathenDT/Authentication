@@ -32,9 +32,9 @@ const MY_SQL_URL = process.env.MY_SQL_URL as string
   app.use(express.json())
   app.use(
     cors({
-      origin: 'http://localhost:3000',
+      origin: ['http://localhost:3000/', 'https://nathendt.github.io/'],
       credentials: true,
-      optionsSuccessStatus: 200,
+      optionsSuccessStatus: 401,
     })
   )
 

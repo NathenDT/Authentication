@@ -35,7 +35,8 @@ export default function ForgotPassword({ setError }: Props) {
     handleClose()
 
     const response = await fetch(
-      '/v1/forgotpassword/request?email=' + email.text
+      'https://authentication-7t3k.onrender.com/v1/forgotpassword/request?email=' +
+        email.text
     )
 
     setLoading(false)

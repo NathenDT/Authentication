@@ -3,7 +3,8 @@
   "packageManager": "yarn@3.2.2",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://127.0.0.1:8080/",
+  "proxy": "https://authentication-7t3k.onrender.com/",
+  "homepage": "https://NathenDT.github.io/Authentication",
   "dependencies": {
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
@@ -16,6 +17,7 @@
     "@types/react": "^18.0.20",
     "@types/react-dom": "^18.0.6",
     "gapi-script": "^1.2.0",
+    "gh-pages": "^4.0.0",
     "mui-passwordtextfield": "^0.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -29,7 +31,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "browserslist": {
     "production": [

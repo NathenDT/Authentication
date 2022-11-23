@@ -23,12 +23,15 @@ export default function Home() {
       setTitleContext('Home')
       setLoading(true)
 
-      const response = await fetch('/v1/user/get/withtoken', {
-        method: 'GET',
-        headers: new Headers({
-          Authorization: token,
-        }),
-      })
+      const response = await fetch(
+        'https://authentication-7t3k.onrender.com/v1/user/get/withtoken',
+        {
+          method: 'GET',
+          headers: new Headers({
+            Authorization: token,
+          }),
+        }
+      )
 
       const json = await response.json()
 
