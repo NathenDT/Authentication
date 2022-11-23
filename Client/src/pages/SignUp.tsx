@@ -1,192 +1,196 @@
-import { useState } from 'react'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 
-import { testEmail } from '../App'
+import PasswordTextField from 'mui-passwordtextfield'
+import { useContext, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import GoogleLogIn from '../components/GoogleLogIn'
-import TextInput from '../components/TextInput'
+import {
+  LoadingContext,
+  TokenContext,
+  WrapperTitleContext,
+} from '../utils/context'
+import handleFormTextFieldChange from '../utils/handleTextFieldChange/form'
+import handleFormConfirmPasswordTextFieldChange from '../utils/handleTextFieldChange/password'
+import isTextFieldFormOk from '../utils/isTextFieldFormOk'
+import { FTFVDEFAULT } from '../utils/textFieldDefault'
 
-import * as Fetch from '../utils/Fetch'
+export default function LogIn() {
+  const navigate = useNavigate()
 
-import './style/SignUp.scss'
+  const [, setToken] = useContext(TokenContext)
+  const [, setLoading] = useContext(LoadingContext)
+  const [, setWrapperTitleContext] = useContext(WrapperTitleContext)
 
-type Props = {
-  changeToken: Function,
-  changeMainPage: Function,
-  setGoogleOAuthToken: Function
-}
+  const [firstName, setFirstName] = useState(FTFVDEFAULT)
+  const [lastName, setLastName] = useState(FTFVDEFAULT)
+  const [email, setEmail] = useState(FTFVDEFAULT)
+  const [username, setUsername] = useState(FTFVDEFAULT)
+  const [password, setPassword] = useState(FTFVDEFAULT)
+  const [confirmPassword, setConfirmPassword] = useState(FTFVDEFAULT)
 
-function SignUp({ changeToken, changeMainPage, setGoogleOAuthToken }: Props): JSX.Element {
-  const
-    [firstname, setFirstname] = useState(''),
-    [lastname, setLastname] = useState(''),
-    [username, setUsername] = useState(''),
-    [email, setEmail] = useState(''),
-    [password, setPassword] = useState(''),
-    [rememberMe, setRememberMe] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
 
-  const
-    [firstnameErrorMessage, setFirstnameErrorMessage] = useState(''),
-    [lastnameErrorMessage, setLastnameErrorMessage] = useState(''),
-    [usernameErrorMessage, setUsernameErrorMessage] = useState(''),
-    [emailErrorMessage, setEmailErrorMessage] = useState(''),
-    [passwordErrorMessage, setPasswordErrorMessage] = useState('')
+  const [error, setError] = useState('')
 
-  const handleGoLogIn = () => changeMainPage(1)
+  const handleSubmit = async () => {
+    if (
+      !isTextFieldFormOk([
+        { state: firstName, setState: setFirstName },
+        { state: lastName, setState: setLastName },
+        { state: email, setState: setEmail },
+        { state: username, setState: setUsername },
+        { state: password, setState: setPassword },
+        { state: confirmPassword, setState: setConfirmPassword },
+      ])
+    )
+      return setError('Fix Errors')
 
-  const handleRememberMe = (e: any) => setRememberMe(e.target.checked)
+    setLoading(true)
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault()
+    const request = await fetch('/v1/user/signup', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        first_name: firstName.text,
+        last_name: lastName.text,
+        email: email.text,
+        username: username.text,
+        password: password.text,
+      }),
+    })
 
-    let hasError: boolean = false
+    const json = await request.json()
 
-    if(firstname === '') {
-      setFirstnameErrorMessage('Please Enter an Value')
-      hasError = true
-    }
+    setLoading(false)
 
-    if(lastname === '') {
-      setLastnameErrorMessage('Please Enter an Value')
-      hasError = true
-    }
+    if (!request.ok) return setError(json.errorMessage)
 
-    if(username === '') {
-      setUsernameErrorMessage('Please Enter an Value')
-      hasError = true
-    }
+    setError('')
 
-    if(email === '') {
-      setEmailErrorMessage('Please Enter an Value')
-      hasError = true
-    }
+    const _token = json.token
 
-    if(password === '') {
-      setPasswordErrorMessage('Please Enter an Value')
-      hasError = true
-    }
+    setToken(_token)
 
-    if(firstnameErrorMessage + lastnameErrorMessage + usernameErrorMessage + emailErrorMessage + passwordErrorMessage !== '') {
-      hasError = true
-    }
+    if (rememberMe) localStorage.setItem('token', _token)
 
-    if(hasError) return
-
-    const response = await Fetch.setNewUser(firstname, lastname, username.toUpperCase(), email, password)
-    const data: any = await response.json()
-
-    if(response.status != 200) {
-      return data.locations.forEach((location: string) => {
-        switch(location) {
-          case 'username':
-            setUsernameErrorMessage('Username Taken')
-            break
-          case 'email':
-            setEmailErrorMessage('Use a different email')
-            break
-        }
-      })
-    }
-
-    changeToken(data.token, rememberMe)
-    changeMainPage(0)
+    navigate('/')
   }
 
+  useEffect(() => setWrapperTitleContext('Sign Up'), [])
+
   return (
-    <form className = 'SignUp-FORM form' onSubmit = { handleSubmit }>
-      <h1 className = 'full'>Sign Up</h1>
-
-      <div className = 'half'>
-        <TextInput
-          type = 'fname'
-          name = 'First Name'
-          value = { firstname }
-          setValue = { setFirstname }
-          errorMessage = { firstnameErrorMessage }
-          setErrorMessage = { setFirstnameErrorMessage }
-          required = { true }
+    <>
+      <Box display="flex" width="100%">
+        <TextField
+          label="First Name"
+          value={firstName.text}
+          onChange={handleFormTextFieldChange(setFirstName)}
+          error={Boolean(firstName.error)}
+          helperText={firstName.error}
+          sx={{ margin: 1 }}
+          fullWidth
         />
-      </div>
 
-      <div className = 'half'>
-        <TextInput
-          type = 'lname'
-          name = 'Last Name'
-          value = { lastname }
-          setValue = { setLastname }
-          errorMessage = { lastnameErrorMessage }
-          setErrorMessage = { setLastnameErrorMessage }
-          required = { true }
+        <TextField
+          label="Last Name"
+          value={lastName.text}
+          onChange={handleFormTextFieldChange(setLastName)}
+          error={Boolean(lastName.error)}
+          helperText={lastName.error}
+          sx={{ margin: 1 }}
+          fullWidth
         />
-      </div>
+      </Box>
 
-      <div className = 'full'>
-        <TextInput
-          type = 'username'
-          name = 'Username'
-          value = { username }
-          setValue = { setUsername }
-          errors = { [{
-            condition: testEmail.test(username),
-            message: 'Don\'t Enter an Email'
-          }] }
-          errorMessage = { usernameErrorMessage }
-          setErrorMessage = { setUsernameErrorMessage }
-          required = { true }
-        />
-      </div>
+      <TextField
+        label="Email"
+        type="email"
+        value={email.text}
+        onChange={handleFormTextFieldChange(setEmail, false, [
+          {
+            condition: !Boolean(
+              email.text.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g)
+            ),
+            message: 'Enter a Valid Email',
+          },
+        ])}
+        error={Boolean(email.error)}
+        helperText={email.error}
+        sx={{ margin: 1 }}
+      />
 
-      <div className = 'full'>
-        <TextInput
-          type = 'email'
-          name = 'Email'
-          value = { email }
-          setValue = { setEmail }
-          errors = { [{
-            condition: !testEmail.test(email),
-            message: 'Enter an Email'
-          }] }
-          errorMessage = { emailErrorMessage }
-          setErrorMessage = { setEmailErrorMessage }
-          required = { true }
-        />
-      </div>
+      <TextField
+        label="Username"
+        value={username.text}
+        onChange={handleFormTextFieldChange(setUsername)}
+        error={Boolean(username.error)}
+        helperText={username.error}
+        sx={{ margin: 1 }}
+      />
 
-      <div className = 'full'>
-        <TextInput
-          type = 'password'
-          name = 'Password'
-          value = { password }
-          setValue = { setPassword }
-          errorMessage = { passwordErrorMessage }
-          setErrorMessage = { setPasswordErrorMessage }
-          required = { true }
-        />
-      </div>
+      <PasswordTextField
+        label="Password"
+        sx={{ margin: 1 }}
+        value={password.text}
+        onChange={handleFormConfirmPasswordTextFieldChange(
+          setPassword,
+          confirmPassword,
+          setConfirmPassword
+        )}
+        error={Boolean(password.error)}
+        helperText={password.error}
+      />
 
-      <div className = 'full'>
-        <input
-          type = 'checkbox'
-          checked = { rememberMe }
-          onChange = { handleRememberMe }
-        />
-        <label>Remember Me</label>
-      </div>
+      <PasswordTextField
+        label="Confirm Password"
+        sx={{ margin: 1 }}
+        value={confirmPassword.text}
+        onChange={handleFormConfirmPasswordTextFieldChange(
+          setConfirmPassword,
+          password,
+          setPassword
+        )}
+        error={Boolean(confirmPassword.error)}
+        helperText={confirmPassword.error}
+      />
 
-      <div className = 'full'>
-        <input type = 'submit' value = 'Sign Up' />
-      </div>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={rememberMe}
+            onChange={() => setRememberMe(!rememberMe)}
+          />
+        }
+        label="Remember Me"
+        sx={{ margin: 1, color: 'text.primary' }}
+      />
 
-      <div className = 'full'>
-        <GoogleLogIn
-          changeToken = { changeToken }
-          changeMainPage = { changeMainPage }
-          setGoogleOAuthToken = { setGoogleOAuthToken }
-        /> 
-      </div>
+      <Button variant="contained" onClick={handleSubmit} sx={{ margin: 1 }}>
+        Sign Up
+      </Button>
 
-      <p className = 'full'>Have an Account? <button type = 'button' onClick = { handleGoLogIn }>Log In</button></p>
-    </form>
+      {error && (
+        <Typography variant="body2" color="error" sx={{ margin: 1 }}>
+          {error}
+        </Typography>
+      )}
+
+      <Box display="flex">
+        <Box flexGrow={1}></Box>
+
+        <Typography color="text.primary" sx={{ margin: 1 }}>
+          Already have an account?
+          <Button href="login">Log In</Button>
+        </Typography>
+      </Box>
+    </>
   )
 }
-
-export default SignUp
