@@ -10,7 +10,7 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { BrowserRouter, Routes } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes } from 'react-router-dom'
 
 import WrapperBox from './WrapperBox'
 import Header from '../Header'
@@ -62,7 +62,7 @@ export default function Wrapper({ children, token, setToken }: Props) {
         <LoadingContext.Provider value={[loading, setLoading]}>
           <WrapperTitleContext.Provider value={[wrapperTitle, setWrapperTitle]}>
             <WrapperBox>
-              <BrowserRouter>
+              <HashRouter>
                 <Header themeMode={themeMode} setThemeMode={setThemeMode} />
 
                 <Routes>{children}</Routes>
@@ -76,7 +76,7 @@ export default function Wrapper({ children, token, setToken }: Props) {
                 >
                   <CircularProgress color="inherit" />
                 </Backdrop>
-              </BrowserRouter>
+              </HashRouter>
             </WrapperBox>
           </WrapperTitleContext.Provider>
         </LoadingContext.Provider>

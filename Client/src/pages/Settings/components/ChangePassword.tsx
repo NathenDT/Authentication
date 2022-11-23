@@ -38,18 +38,21 @@ export default function ChangePassword({
   const handleSubmit = async () => {
     setLoading(true)
 
-    const request = await fetch('/v1/user/update/password', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        Authorization: token,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        old_password: oldPassword.text,
-        new_password: newPassword.text,
-      }),
-    })
+    const request = await fetch(
+      'https://authentication-7t3k.onrender.com/v1/user/update/password',
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          old_password: oldPassword.text,
+          new_password: newPassword.text,
+        }),
+      }
+    )
 
     const json = await request.json()
 

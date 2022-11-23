@@ -38,17 +38,20 @@ export default function UpdateUser({
     setLoading(true)
     setError('')
 
-    const request = await fetch('/v1/user/update', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        Authorization: token,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(
-        settingFieldChanges(firstName, lastName, email, username)
-      ),
-    })
+    const request = await fetch(
+      'https://authentication-7t3k.onrender.com/v1/user/update',
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          settingFieldChanges(firstName, lastName, email, username)
+        ),
+      }
+    )
 
     const json = await request.json()
 

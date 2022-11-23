@@ -52,20 +52,23 @@ export default function LogIn() {
 
     setLoading(true)
 
-    const request = await fetch('/v1/user/signup', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        first_name: firstName.text,
-        last_name: lastName.text,
-        email: email.text,
-        username: username.text,
-        password: password.text,
-      }),
-    })
+    const request = await fetch(
+      'https://authentication-7t3k.onrender.com/v1/user/signup',
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          first_name: firstName.text,
+          last_name: lastName.text,
+          email: email.text,
+          username: username.text,
+          password: password.text,
+        }),
+      }
+    )
 
     const json = await request.json()
 
@@ -188,7 +191,7 @@ export default function LogIn() {
 
         <Typography color="text.primary" sx={{ margin: 1 }}>
           Already have an account?
-          <Button href="login">Log In</Button>
+          <Button onClick={() => navigate('/login')}>Log In</Button>
         </Typography>
       </Box>
     </>

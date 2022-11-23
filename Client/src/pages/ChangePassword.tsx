@@ -21,7 +21,7 @@ export default function ChangePassword() {
     const token = searchParams.get('token') as string
 
     const response = await fetch(
-      'http://localhost:8080/v1/forgotpassword/changepassword',
+      'https://authentication-7t3k.onrender.com/v1/forgotpassword/changepassword',
       {
         method: 'POST',
         headers: {

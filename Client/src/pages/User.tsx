@@ -25,7 +25,8 @@ export default function User() {
       const username = searchParams.get('username')
 
       const response = await fetch(
-        'http://localhost:8080/v1/user/get/withusername?username=' + username
+        'https://authentication-7t3k.onrender.com/v1/user/get/withusername?username=' +
+          username
       )
 
       const json = await response.json()
