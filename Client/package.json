@@ -3,7 +3,7 @@
   "packageManager": "yarn@3.2.2",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://authentication-7t3k.onrender.com/",
+  "proxy": "http://localhost:8080/",
   "homepage": "https://NathenDT.github.io/Authentication",
   "dependencies": {
     "@emotion/react": "^11.10.4",
