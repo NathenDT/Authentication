@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField'
 import { Dispatch, SetStateAction, useContext, useState } from 'react'
 
 import { LoadingContext } from '../../../utils/context'
+import getServerUrl from '../../../utils/getServerUrl'
 import handleFormTextFieldChange from '../../../utils/handleTextFieldChange/form'
 import emailValidation from '../../../utils/emailValidation'
 
@@ -35,8 +36,7 @@ export default function ForgotPassword({ setError }: Props) {
     handleClose()
 
     const response = await fetch(
-      'https://authentication-7t3k.onrender.com/v1/forgotpassword/request?email=' +
-        email.text
+      getServerUrl() + '/v1/forgotpassword/request?email=' + email.text
     )
 
     setLoading(false)

@@ -17,6 +17,7 @@ import {
   TokenContext,
   WrapperTitleContext,
 } from '../../utils/context'
+import getServerUrl from '../../utils/getServerUrl'
 import handleFormTextFieldChange from '../../utils/handleTextFieldChange/form'
 import isTextFieldFormOk from '../../utils/isTextFieldFormOk'
 import { FTFVDEFAULT } from '../../utils/textFieldDefault'
@@ -46,20 +47,17 @@ export default function LogIn() {
 
     setLoading(true)
 
-    const request = await fetch(
-      'https://authentication-7t3k.onrender.com/v1/user/login',
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username.text,
-          password: password.text,
-        }),
-      }
-    )
+    const request = await fetch(getServerUrl() + '/v1/user/login', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username.text,
+        password: password.text,
+      }),
+    })
 
     const json = await request.json()
 
