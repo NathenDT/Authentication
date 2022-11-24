@@ -17,7 +17,7 @@ export default function Header({ themeMode, setThemeMode }: Props) {
   return (
     <Box display="flex" bgcolor="primary.main" margin={1}>
       <Typography variant="h4" color="primary.contrastText" margin={1}>
-        Authentication | {wrapperTitle}
+        Auth | {wrapperTitle}
       </Typography>
 
       <Box flexGrow={1}></Box>
