@@ -7,6 +7,7 @@ import ChangePassword from './components/ChangePassword'
 import DeleteAccount from './components/DeleteAccount'
 import UpdateUser from './components/UpdateUser'
 import { LoadingContext, TokenContext } from '../../utils/context'
+import getServerUrl from '../../utils/getServerUrl'
 
 export default function Settings() {
   const [token, setToken] = useContext(TokenContext)
@@ -28,15 +29,12 @@ export default function Settings() {
 
   useEffect(() => {
     ;(async function () {
-      const response = await fetch(
-        'https://authentication-7t3k.onrender.com/v1/user/get/withtoken',
-        {
-          method: 'GET',
-          headers: new Headers({
-            Authorization: token,
-          }),
-        }
-      )
+      const response = await fetch(getServerUrl() + '/v1/user/get/withtoken', {
+        method: 'GET',
+        headers: new Headers({
+          Authorization: token,
+        }),
+      })
 
       const json = await response.json()
 

@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField'
 import PasswordTextField from 'mui-passwordtextfield'
 import { Dispatch, SetStateAction, useState } from 'react'
 
+import getServerUrl from '../../../utils/getServerUrl'
 import handleTextFieldChange from '../../../utils/handleTextFieldChange/form'
 
 type Props = {
@@ -42,20 +43,17 @@ export default function DeleteAccount({
   const handleSubmit = async () => {
     setLoading(true)
 
-    const request = await fetch(
-      'https://authentication-7t3k.onrender.com/v1/user/delete',
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          Authorization: token,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          password: password.text,
-        }),
-      }
-    )
+    const request = await fetch(getServerUrl() + '/v1/user/delete', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        password: password.text,
+      }),
+    })
 
     setLoading(false)
     handleClose()

@@ -6,6 +6,7 @@ import { useContext, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { LoadingContext, WrapperTitleContext } from '../utils/context'
+import getServerUrl from '../utils/getServerUrl'
 
 export default function User() {
   const [searchParams] = useSearchParams()
@@ -25,8 +26,7 @@ export default function User() {
       const username = searchParams.get('username')
 
       const response = await fetch(
-        'https://authentication-7t3k.onrender.com/v1/user/get/withusername?username=' +
-          username
+        getServerUrl() + '/v1/user/get/withusername?username=' + username
       )
 
       const json = await response.json()

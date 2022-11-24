@@ -8,6 +8,7 @@ import {
   TokenContext,
   WrapperTitleContext,
 } from '../utils/context'
+import getServerUrl from '../utils/getServerUrl'
 
 export default function Home() {
   const [token, setToken] = useContext(TokenContext)
@@ -23,15 +24,12 @@ export default function Home() {
       setTitleContext('Home')
       setLoading(true)
 
-      const response = await fetch(
-        'https://authentication-7t3k.onrender.com/v1/user/get/withtoken',
-        {
-          method: 'GET',
-          headers: new Headers({
-            Authorization: token,
-          }),
-        }
-      )
+      const response = await fetch(getServerUrl() + '/v1/user/get/withtoken', {
+        method: 'GET',
+        headers: new Headers({
+          Authorization: token,
+        }),
+      })
 
       const json = await response.json()
 

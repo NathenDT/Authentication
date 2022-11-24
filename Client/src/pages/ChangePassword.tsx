@@ -5,6 +5,7 @@ import PasswordTextField from 'mui-passwordtextfield'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
+import getServerUrl from '../utils/getServerUrl'
 import handleFormConfirmPasswordTextFieldChange from '../utils/handleTextFieldChange/password'
 
 export default function ChangePassword() {
@@ -21,7 +22,7 @@ export default function ChangePassword() {
     const token = searchParams.get('token') as string
 
     const response = await fetch(
-      'https://authentication-7t3k.onrender.com/v1/forgotpassword/changepassword',
+      getServerUrl() + '/v1/forgotpassword/changepassword',
       {
         method: 'POST',
         headers: {
