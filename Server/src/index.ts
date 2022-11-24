@@ -3,6 +3,7 @@ import express from 'express'
 import { createConnection } from 'mysql2/promise'
 import nodemailer from 'nodemailer'
 
+import ping from './routes/ping'
 import forgotPasswordChangePassword from './routes/v1/forgotPassword/changePassword'
 import forgotPasswordRequest from './routes/v1/forgotPassword/request'
 import deleteUser from './routes/v1/user/delete'
@@ -30,14 +31,9 @@ const MY_SQL_URL = process.env.MY_SQL_URL as string
   })
 
   app.use(express.json())
-  app.use(
-    cors({
-      origin: ['http://localhost:3000', 'https://nathendt.github.io/'],
-      credentials: true,
-      optionsSuccessStatus: 200,
-    })
-  )
+  app.use(cors())
 
+  ping('/ping', app)
   forgotPasswordChangePassword(
     '/v1/forgotpassword/changePassword',
     app,
@@ -58,11 +54,11 @@ const MY_SQL_URL = process.env.MY_SQL_URL as string
   updatePassword('/v1/user/update/password', app, database)
 
   app.get('/', (_, res) => {
-    res.redirect('http://localhost:3000/login')
+    res.redirect(process.env.WEBSITE_URL as string)
   })
 
   app.get('*', (_, res) => {
-    res.redirect('http://localhost:3000/login')
+    res.redirect(process.env.WEBSITE_URL as string)
   })
 
   app.listen(PORT, () => {

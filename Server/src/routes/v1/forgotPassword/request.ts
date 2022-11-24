@@ -178,7 +178,7 @@ function getEmailHTML(user: UserDatabaseSchema, token: string) {
 
     <a
       class="button"
-      href="http://localhost:3000/changepassword?token=${token}"
+      href="${process.env.WEBSITE_URL as string}changepassword?token=${token}"
     >
       Click to Change Password
     </a>
