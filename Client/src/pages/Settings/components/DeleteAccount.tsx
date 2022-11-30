@@ -1,3 +1,6 @@
+import { ErrorResponseType } from '@backend/v1/'
+import { RequestBodyType } from '@backend/v1/user/delete'
+
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -6,25 +9,23 @@ import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import TextField from '@mui/material/TextField'
 
+import axios, { AxiosError } from 'axios'
 import PasswordTextField from 'mui-passwordtextfield'
-import { Dispatch, SetStateAction, useState } from 'react'
+import { useContext, useState } from 'react'
 
+import {
+  AlertsContext,
+  LoadingContext,
+  TokenContext,
+} from '../../../utils/context'
 import getServerUrl from '../../../utils/getServerUrl'
 import handleTextFieldChange from '../../../utils/handleTextFieldChange/form'
 
-type Props = {
-  token: string
-  setToken: Dispatch<SetStateAction<string>>
-  setLoading: Dispatch<SetStateAction<boolean>>
-  setError: Dispatch<SetStateAction<string>>
-}
+export default function DeleteAccount() {
+  const [token, setToken] = useContext(TokenContext)
+  const [, setLoading] = useContext(LoadingContext)
+  const [alerts, setAlerts] = useContext(AlertsContext)
 
-export default function DeleteAccount({
-  token,
-  setToken,
-  setLoading,
-  setError,
-}: Props) {
   const [open, setOpen] = useState(false)
 
   const FTFVDEFAULT: FormTextFieldValues = { text: '', error: '' }
@@ -32,40 +33,63 @@ export default function DeleteAccount({
   const [password, setPassword] = useState(FTFVDEFAULT)
   const [here, setHere] = useState(FTFVDEFAULT)
 
-  const handleClickOpen = () => {
-    setOpen(true)
-  }
+  const handleClickOpen = () => setOpen(true)
 
-  const handleClose = () => {
-    setOpen(false)
-  }
+  const handleClose = () => setOpen(false)
 
   const handleSubmit = async () => {
     setLoading(true)
+    setAlerts([])
 
-    const request = await fetch(getServerUrl() + '/v1/user/delete', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        Authorization: token,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        password: password.text,
-      }),
-    })
-
-    setLoading(false)
-    handleClose()
-
-    if (!request.ok) {
-      const json = await request.json()
-
-      return setError(json.errorMessage)
+    const body: RequestBodyType = {
+      password: password.text,
     }
 
-    setToken('')
-    localStorage.removeItem('token')
+    try {
+      await axios.post(
+        getServerUrl() + '/v1/user/delete',
+        JSON.stringify(body),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token,
+          },
+          withCredentials: true,
+        }
+      )
+
+      setLoading(false)
+      handleClose()
+
+      setToken('')
+      localStorage.removeItem('token')
+    } catch (error) {
+      const _error = error as AxiosError
+      const { response } = _error
+
+      setLoading(false)
+      handleClose()
+
+      if (!response) {
+        return setAlerts([
+          ...alerts,
+          {
+            severity: 'error',
+            message: 'An Error Occured, Please try again',
+          },
+        ])
+      }
+
+      const { errorMessage } = response.data as ErrorResponseType
+
+      setAlerts([
+        ...alerts,
+        {
+          severity: 'error',
+          message: errorMessage,
+        },
+      ])
+    }
   }
   return (
     <>
@@ -112,7 +136,11 @@ export default function DeleteAccount({
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={here.text.toUpperCase() != 'YES'}
+            disabled={
+              !Boolean(password.text) ||
+              Boolean(password.error) ||
+              here.text.toUpperCase() != 'YES'
+            }
           >
             Delete
           </Button>

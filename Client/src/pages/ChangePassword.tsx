@@ -1,10 +1,19 @@
+import { ErrorResponseType } from '@backend/v1/'
+import { RequestBody } from '@backend/v1/forgotPassword/changePassword'
+
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 
+import axios, { AxiosError } from 'axios'
 import PasswordTextField from 'mui-passwordtextfield'
-import { useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
+import {
+  AlertsContext,
+  LoadingContext,
+  WrapperTitleContext,
+} from '../utils/context'
 import getServerUrl from '../utils/getServerUrl'
 import handleFormConfirmPasswordTextFieldChange from '../utils/handleTextFieldChange/password'
 
@@ -12,6 +21,10 @@ export default function ChangePassword() {
   const navigate = useNavigate()
 
   const [searchParams] = useSearchParams()
+
+  const [, setLoading] = useContext(LoadingContext)
+  const [alerts, setAlerts] = useContext(AlertsContext)
+  const [, setWrapperTitle] = useContext(WrapperTitleContext)
 
   const FTFVDEFAULT: FormTextFieldValues = { text: '', error: '' }
 
@@ -21,27 +34,55 @@ export default function ChangePassword() {
   const handleSubmit = async () => {
     const token = searchParams.get('token') as string
 
-    const response = await fetch(
-      getServerUrl() + '/v1/forgotpassword/changepassword',
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          Authorization: token,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          new_password: newPassword.text,
-        }),
+    setLoading(true)
+    setAlerts([])
+
+    const body: RequestBody = { new_password: newPassword.text }
+
+    try {
+      await axios.post(
+        getServerUrl() + '/v1/forgotpassword/changepassword',
+        JSON.stringify(body),
+        {
+          headers: {
+            Authorization: token,
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        }
+      )
+
+      setNewPassword(FTFVDEFAULT)
+      setConfirmPassword(FTFVDEFAULT)
+
+      return navigate('/login')
+    } catch (error) {
+      const _error = error as AxiosError
+      const { response } = _error
+
+      if (!response) {
+        return setAlerts([
+          ...alerts,
+          {
+            severity: 'error',
+            message: 'An Error Occured, Please try again',
+          },
+        ])
       }
-    )
 
-    if (response.ok) return navigate('/login')
+      const { errorMessage } = response.data as ErrorResponseType
 
-    const json = await response.json()
-
-    console.error(json)
+      setAlerts([
+        ...alerts,
+        {
+          severity: 'error',
+          message: errorMessage,
+        },
+      ])
+    }
   }
+
+  useEffect(() => setWrapperTitle('Change Password'), [])
 
   return (
     <Stack width="100%">
@@ -59,7 +100,7 @@ export default function ChangePassword() {
       />
 
       <PasswordTextField
-        label="Current Password"
+        label="Confirm Password"
         value={confirmPassword.text}
         onChange={handleFormConfirmPasswordTextFieldChange(
           setConfirmPassword,
@@ -71,7 +112,17 @@ export default function ChangePassword() {
         sx={{ margin: 1 }}
       />
 
-      <Button variant="contained" onClick={handleSubmit} sx={{ margin: 1 }}>
+      <Button
+        variant="contained"
+        onClick={handleSubmit}
+        disabled={
+          !Boolean(newPassword.text) ||
+          Boolean(newPassword.error) ||
+          !Boolean(confirmPassword.text) ||
+          Boolean(confirmPassword.error)
+        }
+        sx={{ margin: 1 }}
+      >
         Change Password
       </Button>
     </Stack>

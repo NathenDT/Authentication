@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert'
 import Backdrop from '@mui/material/Backdrop'
 import CircularProgress from '@mui/material/CircularProgress'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
@@ -12,9 +13,11 @@ import {
 } from 'react'
 import { BrowserRouter, HashRouter, Routes } from 'react-router-dom'
 
+import Alerts from './Alerts'
 import WrapperBox from './WrapperBox'
 import Header from '../Header'
 import {
+  AlertsContext,
   LoadingContext,
   TokenContext,
   WrapperTitleContext,
@@ -27,12 +30,11 @@ type Props = {
 }
 
 export default function Wrapper({ children, token, setToken }: Props) {
+  const [alerts, setAlerts] = useState<AlertsType[]>([])
   const [loading, setLoading] = useState(false)
-
   const [themeMode, setThemeMode] = useState<ThemeModeType>(
     (localStorage.getItem('theme') as ThemeModeType) || 'preferred'
   )
-
   const [wrapperTitle, setWrapperTitle] = useState('')
 
   const theme = useMemo(() => {
@@ -56,30 +58,40 @@ export default function Wrapper({ children, token, setToken }: Props) {
     localStorage.setItem('theme', themeMode)
   }, [themeMode])
 
+  useEffect(() => {
+    document.title = wrapperTitle
+  }, [wrapperTitle])
+
   return (
     <ThemeProvider theme={theme}>
       <TokenContext.Provider value={[token, setToken]}>
-        <LoadingContext.Provider value={[loading, setLoading]}>
-          <WrapperTitleContext.Provider value={[wrapperTitle, setWrapperTitle]}>
-            <WrapperBox>
-              <HashRouter>
-                <Header themeMode={themeMode} setThemeMode={setThemeMode} />
+        <AlertsContext.Provider value={[alerts, setAlerts]}>
+          <LoadingContext.Provider value={[loading, setLoading]}>
+            <WrapperTitleContext.Provider
+              value={[wrapperTitle, setWrapperTitle]}
+            >
+              <WrapperBox>
+                <HashRouter>
+                  <Alerts />
 
-                <Routes>{children}</Routes>
+                  <Header themeMode={themeMode} setThemeMode={setThemeMode} />
 
-                <Backdrop
-                  sx={{
-                    color: '#fff',
-                    zIndex: (theme) => theme.zIndex.drawer + 1,
-                  }}
-                  open={loading}
-                >
-                  <CircularProgress color="inherit" />
-                </Backdrop>
-              </HashRouter>
-            </WrapperBox>
-          </WrapperTitleContext.Provider>
-        </LoadingContext.Provider>
+                  <Routes>{children}</Routes>
+
+                  <Backdrop
+                    sx={{
+                      color: '#fff',
+                      zIndex: (theme) => theme.zIndex.drawer + 1,
+                    }}
+                    open={loading}
+                  >
+                    <CircularProgress color="inherit" />
+                  </Backdrop>
+                </HashRouter>
+              </WrapperBox>
+            </WrapperTitleContext.Provider>
+          </LoadingContext.Provider>
+        </AlertsContext.Provider>
       </TokenContext.Provider>
     </ThemeProvider>
   )

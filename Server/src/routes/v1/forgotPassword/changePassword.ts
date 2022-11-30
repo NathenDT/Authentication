@@ -4,9 +4,9 @@ import { Connection, RowDataPacket } from 'mysql2/promise'
 
 import getIdFromToken from '../../../utils/getIdFromToken'
 
-import { ErrorResponse, UserDatabaseSchema } from '../index'
+import { ErrorResponseType, UserDatabaseSchema } from '../index'
 
-type UpdatePasswordRequestBody = {
+export type RequestBody = {
   new_password: string
 }
 
@@ -17,10 +17,10 @@ const post = (database: Connection) => async (req: Request, res: Response) => {
     true
   )
 
-  const { new_password }: UpdatePasswordRequestBody = req.body
+  const { new_password }: RequestBody = req.body
 
   if (!id || !new_password) {
-    const response: ErrorResponse = { errorMessage: 'Bad Request' }
+    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
 
     return res.status(400).json(response)
   }
@@ -28,7 +28,7 @@ const post = (database: Connection) => async (req: Request, res: Response) => {
   const user = await getUser(database, id)
 
   if (!user) {
-    const response: ErrorResponse = {
+    const response: ErrorResponseType = {
       errorMessage: 'Invalid Token',
     }
 
@@ -40,7 +40,7 @@ const post = (database: Connection) => async (req: Request, res: Response) => {
   const updateError = await updatePassword(database, id, encryptedPassword)
 
   if (updateError) {
-    const response: ErrorResponse = {
+    const response: ErrorResponseType = {
       errorMessage: 'An Error Occured, Please Try Again',
     }
 
@@ -85,3 +85,5 @@ async function updatePassword(
 
   return updateError
 }
+
+module.exports = password

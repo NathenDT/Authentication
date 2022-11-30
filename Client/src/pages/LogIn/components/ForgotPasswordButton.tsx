@@ -1,3 +1,6 @@
+import { ErrorResponseType } from '@backend/v1/'
+import { RequestQuery } from '@backend/v1/forgotPassword/request'
+
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -6,18 +9,16 @@ import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import TextField from '@mui/material/TextField'
 
-import { Dispatch, SetStateAction, useContext, useState } from 'react'
+import axios, { AxiosError } from 'axios'
+import { useContext, useState } from 'react'
 
-import { LoadingContext } from '../../../utils/context'
+import { AlertsContext, LoadingContext } from '../../../utils/context'
 import getServerUrl from '../../../utils/getServerUrl'
 import handleFormTextFieldChange from '../../../utils/handleTextFieldChange/form'
 import emailValidation from '../../../utils/emailValidation'
 
-type Props = {
-  setError: Dispatch<SetStateAction<string>>
-}
-
-export default function ForgotPassword({ setError }: Props) {
+export default function ForgotPassword() {
+  const [alerts, setAlerts] = useContext(AlertsContext)
   const [, setLoading] = useContext(LoadingContext)
 
   const [open, setOpen] = useState(false)
@@ -34,18 +35,42 @@ export default function ForgotPassword({ setError }: Props) {
   const handleSubmit = async () => {
     setLoading(true)
     handleClose()
+    setAlerts([])
 
-    const response = await fetch(
-      getServerUrl() + '/v1/forgotpassword/request?email=' + email.text
-    )
+    const params: RequestQuery = {
+      email: email.text,
+    }
 
-    setLoading(false)
+    try {
+      setLoading(false)
 
-    if (response.ok) return
+      await axios.get(getServerUrl() + '/v1/forgotpassword/request', { params })
+    } catch (error) {
+      const _error = error as AxiosError
+      const response = _error.response
 
-    const json = await response.json()
+      setLoading(false)
 
-    setError(json.errorMessage)
+      if (!response) {
+        return setAlerts([
+          ...alerts,
+          {
+            severity: 'error',
+            message: 'An Error Occured, Please try again',
+          },
+        ])
+      }
+
+      const { errorMessage } = response.data as ErrorResponseType
+
+      setAlerts([
+        ...alerts,
+        {
+          severity: 'error',
+          message: errorMessage,
+        },
+      ])
+    }
   }
 
   return (
@@ -82,7 +107,11 @@ export default function ForgotPassword({ setError }: Props) {
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
 
-          <Button variant="contained" onClick={handleSubmit}>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={!Boolean(email.text) || Boolean(email.error)}
+          >
             Forgot
           </Button>
         </DialogActions>

@@ -1,17 +1,24 @@
 import { Express, Request, Response } from 'express'
 import { Connection, RowDataPacket } from 'mysql2/promise'
 
-import { ErrorResponse, UserDatabaseSchema } from '../../index'
+import { ErrorResponseType, UserDatabaseSchema } from '../../index'
 
-type GetWithUsernameQuery = {
+export type RequestQueryType = {
   username?: string
 }
 
+export type ResponseType = {
+  first_name: string
+  last_name: string
+  username: string
+  created: string
+}
+
 const get = (database: Connection) => async (req: Request, res: Response) => {
-  const { username } = req.query as GetWithUsernameQuery
+  const { username } = req.query as RequestQueryType
 
   if (!username) {
-    const response: ErrorResponse = { errorMessage: 'Invalid Request' }
+    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
 
     return res.status(400).json(response)
   }
@@ -19,9 +26,9 @@ const get = (database: Connection) => async (req: Request, res: Response) => {
   const user = await getUser(database, username)
 
   if (!user) {
-    const response: ErrorResponse = { errorMessage: 'Not Authorized' }
+    const response: ErrorResponseType = { errorMessage: 'Not Found' }
 
-    return res.status(401).json(response)
+    return res.status(404).json(response)
   }
 
   res.json(user)
@@ -53,3 +60,5 @@ async function getUser(
 
   return users[0] as UserDatabaseSchema
 }
+
+module.exports = getWithUsername

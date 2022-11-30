@@ -1,19 +1,23 @@
 import { Express, Request, Response } from 'express'
 import { Connection, RowDataPacket } from 'mysql2/promise'
 
-import {
-  ErrorResponse,
-  GetUserWithTokenResponse,
-  UserDatabaseSchema,
-} from '../../index'
+import { ErrorResponseType, UserDatabaseSchema } from '../../index'
 
 import getIdFromToken from '../../../../utils/getIdFromToken'
+
+export type ResponseType = {
+  first_name: string
+  last_name: string
+  email: string
+  username: string
+  created: Date
+}
 
 const get = (database: Connection) => async (req: Request, res: Response) => {
   const id = await getIdFromToken(database, req.headers.authorization as string)
 
   if (!id) {
-    const response: ErrorResponse = { errorMessage: 'Not Authorized' }
+    const response: ErrorResponseType = { errorMessage: 'Not Authorized' }
 
     return res.status(401).json(response)
   }
@@ -21,12 +25,12 @@ const get = (database: Connection) => async (req: Request, res: Response) => {
   const user = await getUser(database, id)
 
   if (!user) {
-    const response: ErrorResponse = { errorMessage: 'Not Authorized' }
+    const response: ErrorResponseType = { errorMessage: 'Not Authorized' }
 
     return res.status(401).json(response)
   }
 
-  res.json(user as GetUserWithTokenResponse)
+  res.json(user as ResponseType)
 }
 
 export default function getWithToken(
@@ -56,3 +60,5 @@ async function getUser(
 
   return users[0] as UserDatabaseSchema
 }
+
+module.exports = getWithToken

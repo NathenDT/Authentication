@@ -9,13 +9,25 @@ type Props = TextFieldProps & {
   name: string
   state: SettingsTextFieldValues
   setState: Dispatch<SetStateAction<SettingsTextFieldValues>>
+  extraErrors?: ExtraErrors[]
 }
 
-export default ({ name, state, setState, ...textFieldProps }: Props) => (
+export default ({
+  name,
+  state,
+  setState,
+  extraErrors,
+  ...textFieldProps
+}: Props) => (
   <TextField
     label={name}
     value={state.text}
-    onChange={handleSettingsTextFieldChange(state, setState)}
+    onChange={handleSettingsTextFieldChange(
+      state,
+      setState,
+      false,
+      extraErrors || []
+    )}
     error={Boolean(state.error)}
     helperText={state.error}
     InputProps={{

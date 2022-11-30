@@ -1,18 +1,10 @@
 import cors from 'cors'
-import express from 'express'
-import { createConnection } from 'mysql2/promise'
-import nodemailer from 'nodemailer'
+import express, { Express } from 'express'
+import { Connection, createConnection } from 'mysql2/promise'
+import nodemailer, { Transporter } from 'nodemailer'
+import path from 'path'
 
-import ping from './routes/ping'
-import forgotPasswordChangePassword from './routes/v1/forgotPassword/changePassword'
-import forgotPasswordRequest from './routes/v1/forgotPassword/request'
-import deleteUser from './routes/v1/user/delete'
-import getWithToken from './routes/v1/user/get/withToken'
-import getWithUsername from './routes/v1/user/get/withUsername'
-import logIn from './routes/v1/user/logIn'
-import signUp from './routes/v1/user/signUp'
-import update from './routes/v1/user/update'
-import updatePassword from './routes/v1/user/update/password'
+import getRoutePaths from './utils/getRoutePaths'
 
 require('dotenv').config()
 
@@ -33,29 +25,7 @@ const MY_SQL_URL = process.env.MY_SQL_URL as string
   app.use(express.json())
   app.use(cors())
 
-  ping('/ping', app)
-  forgotPasswordChangePassword(
-    '/v1/forgotpassword/changePassword',
-    app,
-    database
-  )
-  forgotPasswordRequest(
-    '/v1/forgotpassword/request',
-    app,
-    database,
-    emailTransport
-  )
-  deleteUser('/v1/user/delete', app, database)
-  getWithToken('/v1/user/get/withtoken', app, database)
-  getWithUsername('/v1/user/get/withusername', app, database)
-  signUp('/v1/user/signup', app, database)
-  logIn('/v1/user/login', app, database)
-  update('/v1/user/update', app, database)
-  updatePassword('/v1/user/update/password', app, database)
-
-  app.get('/', (_, res) => {
-    res.redirect(process.env.WEBSITE_URL as string)
-  })
+  createRoutes('routes', app, database, emailTransport)
 
   app.get('*', (_, res) => {
     res.redirect(process.env.WEBSITE_URL as string)
@@ -67,3 +37,22 @@ const MY_SQL_URL = process.env.MY_SQL_URL as string
     console.log('Connected to Database:', database.config.database)
   })
 })()
+
+async function createRoutes(
+  _path: string,
+  app: Express,
+  database: Connection,
+  emailTransport: Transporter
+) {
+  const routePaths = getRoutePaths(path.join(__dirname, _path))
+
+  for (const routePath of routePaths) {
+    try {
+      const func = require('./' + _path + routePath)
+
+      func(routePath.toLowerCase(), app, database, emailTransport)
+    } catch (_) {
+      console.error(routePath)
+    }
+  }
+}

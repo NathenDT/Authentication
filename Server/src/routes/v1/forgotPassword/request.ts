@@ -3,19 +3,19 @@ import jwt from 'jsonwebtoken'
 import { Connection, RowDataPacket } from 'mysql2/promise'
 import { Transporter } from 'nodemailer'
 
-import { ErrorResponse, UserDatabaseSchema } from '../index'
+import { ErrorResponseType, UserDatabaseSchema } from '../index'
 
-type GetWithUsernameQuery = {
+export type RequestQuery = {
   email?: string
 }
 
 const get =
   (database: Connection, emailTransport: Transporter) =>
   async (req: Request, res: Response) => {
-    const { email } = req.query as GetWithUsernameQuery
+    const { email } = req.query as RequestQuery
 
     if (!email) {
-      const response: ErrorResponse = { errorMessage: 'Invalid Request' }
+      const response: ErrorResponseType = { errorMessage: 'Invalid Request' }
 
       return res.status(400).json(response)
     }
@@ -23,7 +23,7 @@ const get =
     const user = await getUser(database, email)
 
     if (!user) {
-      const response: ErrorResponse = {
+      const response: ErrorResponseType = {
         errorMessage: 'Not Account with that Email',
       }
 
@@ -44,7 +44,7 @@ const get =
         html: getEmailHTML(user, token),
       })
     } catch (_) {
-      const response: ErrorResponse = {
+      const response: ErrorResponseType = {
         errorMessage: 'An error occurred please try again',
       }
 
@@ -186,3 +186,5 @@ function getEmailHTML(user: UserDatabaseSchema, token: string) {
 </div>
 `
 }
+
+module.exports = forgotPasswordRequest

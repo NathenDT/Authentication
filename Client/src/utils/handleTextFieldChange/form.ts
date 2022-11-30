@@ -1,10 +1,5 @@
 import { ChangeEvent, Dispatch, SetStateAction } from 'react'
 
-type ExtraErrors = {
-  condition: boolean
-  message: string
-}
-
 export default (
     setState: Dispatch<SetStateAction<FormTextFieldValues>>,
     notRequired?: boolean,

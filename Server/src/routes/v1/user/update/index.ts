@@ -1,42 +1,35 @@
 import { Express, Request, Response } from 'express'
 import { Connection, RowDataPacket } from 'mysql2/promise'
 
+import { ErrorResponseType, UserDatabaseSchema } from '../../'
 import getIdFromToken from '../../../../utils/getIdFromToken'
 
-type UserDatabaseSchema = {
-  id: string
-  first_name: string
-  last_name: string
-  email: string
-  username: string
-  password: string
-  created: Date
-  verified: boolean
-}
-
-type ErrorResponse = {
-  errorMessage: string
-}
-
-type UpdateRequestBody = {
+export type RequestBodyType = {
   first_name?: string
   last_name?: string
   email?: string
   username?: string
 }
 
+export type ResponseType = {
+  first_name: string
+  last_name: string
+  email: string
+  username: string
+}
+
 const post = (database: Connection) => async (req: Request, res: Response) => {
   const id = await getIdFromToken(database, req.headers.authorization as string)
 
-  const { first_name, last_name, email, username }: UpdateRequestBody = req.body
+  const { first_name, last_name, email, username }: RequestBodyType = req.body
 
   if (!id) {
-    const response: ErrorResponse = { errorMessage: 'Bad Request' }
+    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
 
     return res.status(400).json(response)
   }
 
-  let updates: UpdateRequestBody = {}
+  let updates: RequestBodyType = {}
 
   let usernameTaken = false
   let emailTaken = false
@@ -59,7 +52,7 @@ const post = (database: Connection) => async (req: Request, res: Response) => {
   }
 
   if (usernameTaken || emailTaken) {
-    let response: ErrorResponse = { errorMessage: '' }
+    let response: ErrorResponseType = { errorMessage: '' }
 
     if (usernameTaken && emailTaken) {
       response.errorMessage = 'Username and Email Taken'
@@ -75,26 +68,22 @@ const post = (database: Connection) => async (req: Request, res: Response) => {
   const updateError = await updateUser(database, id, updates)
 
   if (updateError) {
-    const response: ErrorResponse = {
+    const response: ErrorResponseType = {
       errorMessage: 'An Error Occured, Please Try Again',
     }
 
     return res.status(401).json(response)
   }
 
-  const [users] = (await database.query(
-    `SELECT first_name, last_name, email, username FROM Users WHERE id="${id}"`
-  )) as RowDataPacket[][]
+  const user = await getUser(database, id)
 
-  if (!Boolean(users.length)) {
-    const response: ErrorResponse = {
+  if (!user) {
+    const response: ErrorResponseType = {
       errorMessage: 'Invalid Token',
     }
 
     return res.status(401).json(response)
   }
-
-  const user = users[0] as UserDatabaseSchema
 
   res.json(user)
 }
@@ -136,12 +125,39 @@ async function usernameExists(database: Connection, username: string) {
 async function updateUser(
   database: Connection,
   id: string,
-  updates: UpdateRequestBody
+  updates: RequestBodyType
 ) {
   const [, updateError] = (await database.query(
-    `UPDATE Users SET ? WHERE id="${id}"`,
+    `
+      UPDATE Users
+      SET ?
+      WHERE id="${id}"
+    `,
     updates
   )) as RowDataPacket[][]
 
   return updateError
 }
+
+async function getUser(
+  database: Connection,
+  id: string
+): Promise<UserDatabaseSchema | undefined> {
+  const [users] = (await database.query(
+    `
+      SELECT
+        first_name,
+        last_name,
+        email,
+        username
+      FROM Users
+      WHERE id="${id}"
+    `
+  )) as RowDataPacket[][]
+
+  if (!Boolean(users.length)) return
+
+  return users[0] as UserDatabaseSchema
+}
+
+module.exports = update
