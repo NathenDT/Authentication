@@ -16,56 +16,67 @@ export type ResponseType = {
 }
 
 const post = (database: Connection) => async (req: Request, res: Response) => {
-  const id = await getIdFromToken(database, req.headers.authorization as string)
+  try {
+    const id = await getIdFromToken(
+      database,
+      req.headers.authorization as string
+    )
 
-  const { old_password, new_password }: RequestBodyType = req.body
+    const { old_password, new_password }: RequestBodyType = req.body
 
-  if (!id || !old_password || !new_password) {
-    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+    if (!id || !old_password || !new_password) {
+      const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+
+      return res.status(400).json(response)
+    }
+
+    const user = await getUser(database, id)
+
+    if (!user) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Invalid Token',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const isPassword = await bcrypt.compare(old_password, user.password)
+
+    if (!isPassword) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Password is wrong',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const encryptedPassword = await bcrypt.hash(new_password, 10)
+
+    const updateError = await updateUser(database, id, encryptedPassword)
+
+    if (updateError) {
+      const response: ErrorResponseType = {
+        errorMessage: 'An Error Occured, Please Try Again',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const token = jwt.sign(
+      { id, password: encryptedPassword },
+      process.env.JWT_SECRET as string
+    )
+
+    const response: ResponseType = { token }
+
+    res.json(response)
+  } catch (_) {
+    const response: ErrorResponseType = {
+      errorMessage: 'An Error Occured, Please Try Again Later',
+    }
 
     return res.status(400).json(response)
   }
-
-  const user = await getUser(database, id)
-
-  if (!user) {
-    const response: ErrorResponseType = {
-      errorMessage: 'Invalid Token',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  const isPassword = await bcrypt.compare(old_password, user.password)
-
-  if (!isPassword) {
-    const response: ErrorResponseType = {
-      errorMessage: 'Password is wrong',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  const encryptedPassword = await bcrypt.hash(new_password, 10)
-
-  const updateError = await updateUser(database, id, encryptedPassword)
-
-  if (updateError) {
-    const response: ErrorResponseType = {
-      errorMessage: 'An Error Occured, Please Try Again',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  const token = jwt.sign(
-    { id, password: encryptedPassword },
-    process.env.JWT_SECRET as string
-  )
-
-  const response: ResponseType = { token }
-
-  res.json(response)
 }
 
 export default function password(

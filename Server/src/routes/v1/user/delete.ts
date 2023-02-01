@@ -11,47 +11,58 @@ export type RequestBodyType = {
 }
 
 const post = (database: Connection) => async (req: Request, res: Response) => {
-  const id = await getIdFromToken(database, req.headers.authorization as string)
+  try {
+    const id = await getIdFromToken(
+      database,
+      req.headers.authorization as string
+    )
 
-  const { password }: RequestBodyType = req.body
+    const { password }: RequestBodyType = req.body
 
-  if (!id || !password) {
-    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+    if (!id || !password) {
+      const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+
+      return res.status(400).json(response)
+    }
+
+    const user = await getUser(database, id)
+
+    if (!user) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Invalid Token',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const isPassword = await bcrypt.compare(password, user.password)
+
+    if (!isPassword) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Password is wrong',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const deleteError = await deleteDatabaseUser(database, id)
+
+    if (deleteError) {
+      const response: ErrorResponseType = {
+        errorMessage: 'An Error Occured, Please Try Again',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    res.end()
+  } catch (_) {
+    const response: ErrorResponseType = {
+      errorMessage: 'An Error Occured, Please Try Again Later',
+    }
 
     return res.status(400).json(response)
   }
-
-  const user = await getUser(database, id)
-
-  if (!user) {
-    const response: ErrorResponseType = {
-      errorMessage: 'Invalid Token',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  const isPassword = await bcrypt.compare(password, user.password)
-
-  if (!isPassword) {
-    const response: ErrorResponseType = {
-      errorMessage: 'Password is wrong',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  const deleteError = await deleteDatabaseUser(database, id)
-
-  if (deleteError) {
-    const response: ErrorResponseType = {
-      errorMessage: 'An Error Occured, Please Try Again',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  res.end()
 }
 
 export default function deleteUser(

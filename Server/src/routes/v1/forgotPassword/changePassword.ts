@@ -11,43 +11,50 @@ export type RequestBody = {
 }
 
 const post = (database: Connection) => async (req: Request, res: Response) => {
-  const id = await getIdFromToken(
-    database,
-    req.headers.authorization as string,
-    true
-  )
+  try {
+    const id = await getIdFromToken(
+      database,
+      req.headers.authorization as string,
+      true
+    )
 
-  const { new_password }: RequestBody = req.body
+    const { new_password }: RequestBody = req.body
 
-  if (!id || !new_password) {
-    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+    if (!id || !new_password) {
+      const response: ErrorResponseType = { errorMessage: 'Bad Request' }
 
+      return res.status(400).json(response)
+    }
+
+    const user = await getUser(database, id)
+
+    if (!user) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Invalid Token',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const encryptedPassword = await bcrypt.hash(new_password, 10)
+
+    const updateError = await updatePassword(database, id, encryptedPassword)
+
+    if (updateError) {
+      const response: ErrorResponseType = {
+        errorMessage: 'An Error Occured, Please Try Again Later',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    res.end()
+  } catch (_) {
+    const response: ErrorResponseType = {
+      errorMessage: 'Something went wrong. Please try again later',
+    }
     return res.status(400).json(response)
   }
-
-  const user = await getUser(database, id)
-
-  if (!user) {
-    const response: ErrorResponseType = {
-      errorMessage: 'Invalid Token',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  const encryptedPassword = await bcrypt.hash(new_password, 10)
-
-  const updateError = await updatePassword(database, id, encryptedPassword)
-
-  if (updateError) {
-    const response: ErrorResponseType = {
-      errorMessage: 'An Error Occured, Please Try Again',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  res.end()
 }
 
 export default function password(

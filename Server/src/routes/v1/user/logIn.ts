@@ -15,42 +15,48 @@ export type ResponseType = {
 }
 
 const post = (database: Connection) => async (req: Request, res: Response) => {
-  const { username, password }: RequestBodyType = req.body
+  try {
+    const { username, password }: RequestBodyType = req.body
 
-  if (!username || !password) {
-    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+    if (!username || !password) {
+      const response: ErrorResponseType = { errorMessage: 'Bad Request' }
 
-    return res.status(400).json(response)
-  }
-
-  const user = await getUser(database, username)
-
-  if (!user) {
-    const response: ErrorResponseType = {
-      errorMessage: 'Username or Password is wrong',
+      return res.status(400).json(response)
     }
 
-    return res.status(401).json(response)
-  }
+    const user = await getUser(database, username)
 
-  const isPassword = await bcrypt.compare(password, user.password)
-
-  if (!isPassword) {
-    const response: ErrorResponseType = {
-      errorMessage: 'Username or Password is wrong',
+    if (!user) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Username or Password is wrong',
+      }
+      return res.status(401).json(response)
     }
 
+    const isPassword = await bcrypt.compare(password, user.password)
+
+    if (!isPassword) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Username or Password is wrong',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const token = jwt.sign(
+      { id: user.id, password: user.password },
+      process.env.JWT_SECRET as string
+    )
+
+    const response: ResponseType = { token }
+
+    res.json(response)
+  } catch (_) {
+    const response: ErrorResponseType = {
+      errorMessage: 'Something went wrong. Please try again later',
+    }
     return res.status(401).json(response)
   }
-
-  const token = jwt.sign(
-    { id: user.id, password: user.password },
-    process.env.JWT_SECRET as string
-  )
-
-  const response: ResponseType = { token }
-
-  res.json(response)
 }
 
 export default function logIn(

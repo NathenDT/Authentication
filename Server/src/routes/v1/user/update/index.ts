@@ -19,73 +19,83 @@ export type ResponseType = {
 }
 
 const post = (database: Connection) => async (req: Request, res: Response) => {
-  const id = await getIdFromToken(database, req.headers.authorization as string)
+  try {
+    const id = await getIdFromToken(
+      database,
+      req.headers.authorization as string
+    )
 
-  const { first_name, last_name, email, username }: RequestBodyType = req.body
+    const { first_name, last_name, email, username }: RequestBodyType = req.body
 
-  if (!id) {
-    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+    if (!id) {
+      const response: ErrorResponseType = { errorMessage: 'Bad Request' }
 
-    return res.status(400).json(response)
-  }
-
-  let updates: RequestBodyType = {}
-
-  let usernameTaken = false
-  let emailTaken = false
-
-  if (first_name) updates.first_name = first_name
-  if (last_name) updates.last_name = last_name
-  if (email) {
-    if (await emailExists(database, email)) {
-      emailTaken = true
-    } else {
-      updates.email = email
-    }
-  }
-  if (username) {
-    if (await usernameExists(database, username)) {
-      usernameTaken = true
-    } else {
-      updates.username = username
-    }
-  }
-
-  if (usernameTaken || emailTaken) {
-    let response: ErrorResponseType = { errorMessage: '' }
-
-    if (usernameTaken && emailTaken) {
-      response.errorMessage = 'Username and Email Taken'
-    } else if (usernameTaken) {
-      response.errorMessage = 'Username Taken'
-    } else if (emailTaken) {
-      response.errorMessage = 'Email Taken'
+      return res.status(400).json(response)
     }
 
-    return res.status(400).json(response)
-  }
+    let updates: RequestBodyType = {}
 
-  const updateError = await updateUser(database, id, updates)
+    let usernameTaken = false
+    let emailTaken = false
 
-  if (updateError) {
+    if (first_name) updates.first_name = first_name
+    if (last_name) updates.last_name = last_name
+    if (email) {
+      if (await emailExists(database, email)) {
+        emailTaken = true
+      } else {
+        updates.email = email
+      }
+    }
+    if (username) {
+      if (await usernameExists(database, username)) {
+        usernameTaken = true
+      } else {
+        updates.username = username
+      }
+    }
+
+    if (usernameTaken || emailTaken) {
+      let response: ErrorResponseType = { errorMessage: '' }
+
+      if (usernameTaken && emailTaken) {
+        response.errorMessage = 'Username and Email Taken'
+      } else if (usernameTaken) {
+        response.errorMessage = 'Username Taken'
+      } else if (emailTaken) {
+        response.errorMessage = 'Email Taken'
+      }
+
+      return res.status(400).json(response)
+    }
+
+    const updateError = await updateUser(database, id, updates)
+
+    if (updateError) {
+      const response: ErrorResponseType = {
+        errorMessage: 'An Error Occured, Please Try Again',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const user = await getUser(database, id)
+
+    if (!user) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Invalid Token',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    res.json(user)
+  } catch (_) {
     const response: ErrorResponseType = {
-      errorMessage: 'An Error Occured, Please Try Again',
+      errorMessage: 'Something went wrong. Please try again later',
     }
-
-    return res.status(401).json(response)
+    return res.status(500).json(response)
   }
-
-  const user = await getUser(database, id)
-
-  if (!user) {
-    const response: ErrorResponseType = {
-      errorMessage: 'Invalid Token',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  res.json(user)
 }
 
 export default function update(

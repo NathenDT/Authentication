@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography'
 
 import axios, { AxiosError } from 'axios'
 import PasswordTextField from 'mui-passwordtextfield'
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import ForgotPassword from './components/ForgotPasswordButton'
@@ -38,9 +38,10 @@ export default function LogIn() {
 
   const [rememberMe, setRememberMe] = useState(false)
 
+  setWrapperTitleContext('Log In')
+
   const handleSubmit = async () => {
     setAlerts([])
-
     setLoading(true)
 
     const body: RequestBodyType = {
@@ -97,8 +98,6 @@ export default function LogIn() {
       ])
     }
   }
-
-  useEffect(() => setWrapperTitleContext('Log In'), [])
 
   return (
     <>

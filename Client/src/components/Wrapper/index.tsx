@@ -1,4 +1,3 @@
-import Alert from '@mui/material/Alert'
 import Backdrop from '@mui/material/Backdrop'
 import CircularProgress from '@mui/material/CircularProgress'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
@@ -11,10 +10,11 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { BrowserRouter, HashRouter, Routes } from 'react-router-dom'
+import { HashRouter, Routes } from 'react-router-dom'
 
 import Alerts from './Alerts'
 import WrapperBox from './WrapperBox'
+import Footer from '../Footer'
 import Header from '../Header'
 import {
   AlertsContext,
@@ -70,25 +70,27 @@ export default function Wrapper({ children, token, setToken }: Props) {
             <WrapperTitleContext.Provider
               value={[wrapperTitle, setWrapperTitle]}
             >
-              <WrapperBox>
-                <HashRouter>
-                  <Alerts />
+              <Footer>
+                <WrapperBox>
+                  <HashRouter>
+                    <Alerts />
 
-                  <Header themeMode={themeMode} setThemeMode={setThemeMode} />
+                    <Header themeMode={themeMode} setThemeMode={setThemeMode} />
 
-                  <Routes>{children}</Routes>
+                    <Routes>{children}</Routes>
 
-                  <Backdrop
-                    sx={{
-                      color: '#fff',
-                      zIndex: (theme) => theme.zIndex.drawer + 1,
-                    }}
-                    open={loading}
-                  >
-                    <CircularProgress color="inherit" />
-                  </Backdrop>
-                </HashRouter>
-              </WrapperBox>
+                    <Backdrop
+                      sx={{
+                        color: '#fff',
+                        zIndex: (theme) => theme.zIndex.drawer + 1,
+                      }}
+                      open={loading}
+                    >
+                      <CircularProgress color="inherit" />
+                    </Backdrop>
+                  </HashRouter>
+                </WrapperBox>
+              </Footer>
             </WrapperTitleContext.Provider>
           </LoadingContext.Provider>
         </AlertsContext.Provider>

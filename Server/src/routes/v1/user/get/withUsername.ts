@@ -15,23 +15,28 @@ export type ResponseType = {
 }
 
 const get = (database: Connection) => async (req: Request, res: Response) => {
-  const { username } = req.query as RequestQueryType
+  try {
+    const { username } = req.query as RequestQueryType
 
-  if (!username) {
-    const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+    if (!username) {
+      const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+      return res.status(400).json(response)
+    }
 
-    return res.status(400).json(response)
+    const user = await getUser(database, username)
+
+    if (!user) {
+      const response: ErrorResponseType = { errorMessage: 'Not Found' }
+      return res.status(404).json(response)
+    }
+
+    res.json(user)
+  } catch (_) {
+    const response: ErrorResponseType = {
+      errorMessage: 'Something went wrong. Please try again later',
+    }
+    return res.status(500).json(response)
   }
-
-  const user = await getUser(database, username)
-
-  if (!user) {
-    const response: ErrorResponseType = { errorMessage: 'Not Found' }
-
-    return res.status(404).json(response)
-  }
-
-  res.json(user)
 }
 
 export default function getWithUsername(
@@ -45,17 +50,17 @@ export default function getWithUsername(
 async function getUser(
   database: Connection,
   username: string
-): Promise<UserDatabaseSchema> {
+): Promise<UserDatabaseSchema | undefined> {
   const [users] = (await database.query(
     `
-      SELECT
-        first_name,
-        last_name,
-        username,
-        created
-      FROM Users
-      WHERE UPPER(username) LIKE UPPER("${username}")
-    `
+    SELECT
+      first_name,
+      last_name,
+      username,
+      created
+    FROM Users
+    WHERE UPPER(username) LIKE UPPER("${username}")
+  `
   )) as RowDataPacket[][]
 
   return users[0] as UserDatabaseSchema
