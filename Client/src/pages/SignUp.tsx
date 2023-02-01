@@ -1,3 +1,6 @@
+import { ErrorResponseType } from '@backend/v1/'
+import { RequestBodyType, ResponseType } from '@backend/v1/user/signUp'
+
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Checkbox from '@mui/material/Checkbox'
@@ -5,11 +8,13 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
+import axios, { AxiosError } from 'axios'
 import PasswordTextField from 'mui-passwordtextfield'
 import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import {
+  AlertsContext,
   LoadingContext,
   TokenContext,
   WrapperTitleContext,
@@ -17,7 +22,6 @@ import {
 import getServerUrl from '../utils/getServerUrl'
 import handleFormTextFieldChange from '../utils/handleTextFieldChange/form'
 import handleFormConfirmPasswordTextFieldChange from '../utils/handleTextFieldChange/password'
-import isTextFieldFormOk from '../utils/isTextFieldFormOk'
 import { FTFVDEFAULT } from '../utils/textFieldDefault'
 
 export default function LogIn() {
@@ -25,6 +29,7 @@ export default function LogIn() {
 
   const [, setToken] = useContext(TokenContext)
   const [, setLoading] = useContext(LoadingContext)
+  const [alerts, setAlerts] = useContext(AlertsContext)
   const [, setWrapperTitleContext] = useContext(WrapperTitleContext)
 
   const [firstName, setFirstName] = useState(FTFVDEFAULT)
@@ -36,53 +41,66 @@ export default function LogIn() {
 
   const [rememberMe, setRememberMe] = useState(false)
 
-  const [error, setError] = useState('')
-
   const handleSubmit = async () => {
-    if (
-      !isTextFieldFormOk([
-        { state: firstName, setState: setFirstName },
-        { state: lastName, setState: setLastName },
-        { state: email, setState: setEmail },
-        { state: username, setState: setUsername },
-        { state: password, setState: setPassword },
-        { state: confirmPassword, setState: setConfirmPassword },
-      ])
-    )
-      return setError('Fix Errors')
-
     setLoading(true)
+    setAlerts([])
 
-    const request = await fetch(getServerUrl() + '/v1/user/signup', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        first_name: firstName.text,
-        last_name: lastName.text,
-        email: email.text,
-        username: username.text,
-        password: password.text,
-      }),
-    })
+    const body: RequestBodyType = {
+      first_name: firstName.text,
+      last_name: lastName.text,
+      email: email.text,
+      username: username.text,
+      password: password.text,
+    }
 
-    const json = await request.json()
+    try {
+      const response = await axios.post(
+        getServerUrl() + '/v1/user/signup',
+        JSON.stringify(body),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: true,
+        }
+      )
 
-    setLoading(false)
+      const { token: _token } = response.data as ResponseType
 
-    if (!request.ok) return setError(json.errorMessage)
+      setToken(_token)
+      if (rememberMe) localStorage.setItem('token', _token)
 
-    setError('')
+      setFirstName(FTFVDEFAULT)
+      setLastName(FTFVDEFAULT)
+      setEmail(FTFVDEFAULT)
+      setUsername(FTFVDEFAULT)
+      setPassword(FTFVDEFAULT)
+      setConfirmPassword(FTFVDEFAULT)
+      setRememberMe(false)
 
-    const _token = json.token
+      navigate('/')
+    } catch (error) {
+      const _error = error as AxiosError
+      const { response } = _error
 
-    setToken(_token)
+      if (!response) {
+        return setAlerts([
+          ...alerts,
+          {
+            severity: 'error',
+            message: 'An Error Occured, Please try again',
+          },
+        ])
+      }
 
-    if (rememberMe) localStorage.setItem('token', _token)
+      const { errorMessage } = response.data as ErrorResponseType
 
-    navigate('/')
+      setAlerts([
+        ...alerts,
+        {
+          severity: 'error',
+          message: errorMessage,
+        },
+      ])
+    }
   }
 
   useEffect(() => setWrapperTitleContext('Sign Up'), [])
@@ -174,15 +192,27 @@ export default function LogIn() {
         sx={{ margin: 1, color: 'text.primary' }}
       />
 
-      <Button variant="contained" onClick={handleSubmit} sx={{ margin: 1 }}>
+      <Button
+        variant="contained"
+        onClick={handleSubmit}
+        disabled={
+          !Boolean(firstName.text) ||
+          Boolean(firstName.error) ||
+          !Boolean(lastName.text) ||
+          Boolean(lastName.error) ||
+          !Boolean(email.text) ||
+          Boolean(email.error) ||
+          !Boolean(username.text) ||
+          Boolean(username.error) ||
+          !Boolean(password.text) ||
+          Boolean(password.error) ||
+          !Boolean(confirmPassword.text) ||
+          Boolean(confirmPassword.error)
+        }
+        sx={{ margin: 1 }}
+      >
         Sign Up
       </Button>
-
-      {error && (
-        <Typography variant="body2" color="error" sx={{ margin: 1 }}>
-          {error}
-        </Typography>
-      )}
 
       <Box display="flex">
         <Box flexGrow={1}></Box>

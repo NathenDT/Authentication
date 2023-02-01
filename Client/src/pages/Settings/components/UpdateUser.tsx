@@ -1,14 +1,23 @@
+import { ErrorResponseType } from '@backend/v1/'
+import { ResponseType } from '@backend/v1/user/update'
+
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 
-import { Dispatch, SetStateAction } from 'react'
+import axios, { AxiosError } from 'axios'
+import { Dispatch, SetStateAction, useContext } from 'react'
 
 import SettingsTextField from '../components/SettingsTextField'
-import getServerUrl from '../../../utils/getServerUrl'
 import settingFieldChanges from '../utils/settingFieldChanges'
+import emailValidation from '../../../utils/emailValidation'
+import getServerUrl from '../../../utils/getServerUrl'
+import {
+  AlertsContext,
+  LoadingContext,
+  TokenContext,
+} from '../../../utils/context'
 
 type Props = {
-  token: string
   firstName: SettingsTextFieldValues
   setFirstName: Dispatch<SetStateAction<SettingsTextFieldValues>>
   lastName: SettingsTextFieldValues
@@ -17,12 +26,9 @@ type Props = {
   setEmail: Dispatch<SetStateAction<SettingsTextFieldValues>>
   username: SettingsTextFieldValues
   setUsername: Dispatch<SetStateAction<SettingsTextFieldValues>>
-  setLoading: Dispatch<SetStateAction<boolean>>
-  setError: Dispatch<SetStateAction<string>>
 }
 
 export default function UpdateUser({
-  token,
   firstName,
   setFirstName,
   lastName,
@@ -31,35 +37,69 @@ export default function UpdateUser({
   setEmail,
   username,
   setUsername,
-  setLoading,
-  setError,
 }: Props) {
+  const [token] = useContext(TokenContext)
+  const [, setLoading] = useContext(LoadingContext)
+  const [alerts, setAlerts] = useContext(AlertsContext)
+
   const handleSubmit = async () => {
     setLoading(true)
-    setError('')
+    setAlerts([])
 
-    const request = await fetch(getServerUrl() + '/v1/user/update', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        Authorization: token,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(
-        settingFieldChanges(firstName, lastName, email, username)
-      ),
-    })
+    try {
+      const response = await axios.post(
+        getServerUrl() + '/v1/user/update',
+        JSON.stringify(
+          settingFieldChanges(firstName, lastName, email, username)
+        ),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token,
+          },
+          withCredentials: true,
+        }
+      )
 
-    const json = await request.json()
+      setLoading(false)
 
-    setLoading(false)
+      const {
+        first_name,
+        last_name,
+        email: _email,
+        username: _username,
+      } = response.data as ResponseType
 
-    if (!request.ok) return setError(json.errorMessage)
+      setFirstName({ ...firstName, original: first_name })
+      setLastName({ ...lastName, original: last_name })
+      setEmail({ ...email, original: _email })
+      setUsername({ ...username, original: _username })
+    } catch (error) {
+      const _error = error as AxiosError
+      const { response } = _error
 
-    setFirstName({ ...firstName, original: json.first_name })
-    setLastName({ ...lastName, original: json.last_name })
-    setEmail({ ...email, original: json.email })
-    setUsername({ ...username, original: json.username })
+      setLoading(false)
+
+      if (!response) {
+        return setAlerts([
+          ...alerts,
+          {
+            severity: 'error',
+            message: 'An Error Occured, Please try again',
+          },
+        ])
+      }
+
+      const { errorMessage } = response.data as ErrorResponseType
+
+      setAlerts([
+        ...alerts,
+        {
+          severity: 'error',
+          message: errorMessage,
+        },
+      ])
+    }
   }
 
   return (
@@ -86,6 +126,9 @@ export default function UpdateUser({
         name="Email"
         state={email}
         setState={setEmail}
+        extraErrors={[
+          { condition: !emailValidation(email.text), message: 'Invalid Email' },
+        ]}
         sx={{ margin: 1 }}
       />
 
@@ -104,7 +147,15 @@ export default function UpdateUser({
             Object.keys(
               settingFieldChanges(firstName, lastName, email, username)
             ).length
-          )
+          ) ||
+          !Boolean(firstName.text) ||
+          Boolean(firstName.error) ||
+          !Boolean(lastName.text) ||
+          Boolean(lastName.error) ||
+          !Boolean(email.text) ||
+          Boolean(email.error) ||
+          !Boolean(username.text) ||
+          Boolean(username.error)
         }
         sx={{ margin: 1 }}
       >

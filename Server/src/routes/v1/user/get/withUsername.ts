@@ -1,30 +1,42 @@
 import { Express, Request, Response } from 'express'
 import { Connection, RowDataPacket } from 'mysql2/promise'
 
-import { ErrorResponse, UserDatabaseSchema } from '../../index'
+import { ErrorResponseType, UserDatabaseSchema } from '../../index'
 
-type GetWithUsernameQuery = {
+export type RequestQueryType = {
   username?: string
 }
 
+export type ResponseType = {
+  first_name: string
+  last_name: string
+  username: string
+  created: string
+}
+
 const get = (database: Connection) => async (req: Request, res: Response) => {
-  const { username } = req.query as GetWithUsernameQuery
+  try {
+    const { username } = req.query as RequestQueryType
 
-  if (!username) {
-    const response: ErrorResponse = { errorMessage: 'Invalid Request' }
+    if (!username) {
+      const response: ErrorResponseType = { errorMessage: 'Bad Request' }
+      return res.status(400).json(response)
+    }
 
-    return res.status(400).json(response)
+    const user = await getUser(database, username)
+
+    if (!user) {
+      const response: ErrorResponseType = { errorMessage: 'Not Found' }
+      return res.status(404).json(response)
+    }
+
+    res.json(user)
+  } catch (_) {
+    const response: ErrorResponseType = {
+      errorMessage: 'Something went wrong. Please try again later',
+    }
+    return res.status(500).json(response)
   }
-
-  const user = await getUser(database, username)
-
-  if (!user) {
-    const response: ErrorResponse = { errorMessage: 'Not Authorized' }
-
-    return res.status(401).json(response)
-  }
-
-  res.json(user)
 }
 
 export default function getWithUsername(
@@ -38,18 +50,20 @@ export default function getWithUsername(
 async function getUser(
   database: Connection,
   username: string
-): Promise<UserDatabaseSchema> {
+): Promise<UserDatabaseSchema | undefined> {
   const [users] = (await database.query(
     `
-      SELECT
-        first_name,
-        last_name,
-        username,
-        created
-      FROM Users
-      WHERE UPPER(username) LIKE UPPER("${username}")
-    `
+    SELECT
+      first_name,
+      last_name,
+      username,
+      created
+    FROM Users
+    WHERE UPPER(username) LIKE UPPER("${username}")
+  `
   )) as RowDataPacket[][]
 
   return users[0] as UserDatabaseSchema
 }
+
+module.exports = getWithUsername

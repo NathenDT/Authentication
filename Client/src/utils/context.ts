@@ -1,5 +1,9 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
+export const AlertsContext = createContext<
+  [AlertsType[], Dispatch<SetStateAction<AlertsType[]>>]
+>([[], () => {}])
+
 export const TokenContext = createContext<
   [string, Dispatch<SetStateAction<string>>]
 >(['', () => {}])

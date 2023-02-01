@@ -23,6 +23,10 @@ export default async function getIdFromToken(
 
   const password = await getPassword(database, id)
 
+  if (!password) {
+    throw 'Something went wrong. Please try again later'
+  }
+
   if (tokenPassword != password) return
 
   return id
@@ -40,16 +44,23 @@ function decodeToken(token: string, isForgotPassword = false) {
   }
 }
 
-async function getPassword(database: Connection, id: string) {
-  const [users] = (await database.query(
-    `
+async function getPassword(
+  database: Connection,
+  id: string
+): Promise<string | undefined> {
+  try {
+    const [users] = (await database.query(
+      `
       SELECT password
       FROM Users
       WHERE id="${id}"
     `
-  )) as RowDataPacket[][]
+    )) as RowDataPacket[][]
 
-  const user = users[0] as UserDatabaseSchema
+    const { password } = users[0] as UserDatabaseSchema
 
-  return user.password
+    return password
+  } catch (_) {
+    return
+  }
 }

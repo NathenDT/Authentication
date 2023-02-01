@@ -16,6 +16,7 @@
     "@types/node": "^18.7.18",
     "@types/react": "^18.0.20",
     "@types/react-dom": "^18.0.6",
+    "axios": "^1.2.0",
     "gapi-script": "^1.2.0",
     "gh-pages": "^4.0.0",
     "mui-passwordtextfield": "^0.1.1",

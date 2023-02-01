@@ -3,55 +3,55 @@ import jwt from 'jsonwebtoken'
 import { Connection, RowDataPacket } from 'mysql2/promise'
 import { Transporter } from 'nodemailer'
 
-import { ErrorResponse, UserDatabaseSchema } from '../index'
+import { ErrorResponseType, UserDatabaseSchema } from '../index'
 
-type GetWithUsernameQuery = {
+export type RequestQuery = {
   email?: string
 }
 
 const get =
   (database: Connection, emailTransport: Transporter) =>
   async (req: Request, res: Response) => {
-    const { email } = req.query as GetWithUsernameQuery
+    try {
+      const { email } = req.query as RequestQuery
 
-    if (!email) {
-      const response: ErrorResponse = { errorMessage: 'Invalid Request' }
+      if (!email) {
+        const response: ErrorResponseType = { errorMessage: 'Invalid Request' }
 
-      return res.status(400).json(response)
-    }
-
-    const user = await getUser(database, email)
-
-    if (!user) {
-      const response: ErrorResponse = {
-        errorMessage: 'Not Account with that Email',
+        return res.status(400).json(response)
       }
 
-      return res.status(401).json(response)
-    }
+      const user = await getUser(database, email)
 
-    const token = jwt.sign(
-      { id: user.id, password: user.password },
-      process.env.JWT_SECRET_FORGOT_PASSWORD as string,
-      { expiresIn: '15m' } // 15 Minutes
-    )
+      if (!user) {
+        const response: ErrorResponseType = {
+          errorMessage: 'Not Account with that Email',
+        }
 
-    try {
+        return res.status(401).json(response)
+      }
+
+      const token = jwt.sign(
+        { id: user.id, password: user.password },
+        process.env.JWT_SECRET_FORGOT_PASSWORD as string,
+        { expiresIn: '15m' } // 15 Minutes
+      )
+
       await emailTransport.sendMail({
         from: 'nathendtauthentication@gmail.com',
         to: email,
         subject: 'Change Password',
         html: getEmailHTML(user, token),
       })
+
+      res.end()
     } catch (_) {
-      const response: ErrorResponse = {
-        errorMessage: 'An error occurred please try again',
+      const response: ErrorResponseType = {
+        errorMessage: 'An Error Occured, Please Try Again Later',
       }
 
       return res.status(500).json(response)
     }
-
-    res.end()
   }
 
 export default function forgotPasswordRequest(
@@ -186,3 +186,5 @@ function getEmailHTML(user: UserDatabaseSchema, token: string) {
 </div>
 `
 }
+
+module.exports = forgotPasswordRequest

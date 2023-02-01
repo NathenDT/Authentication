@@ -7,3 +7,5 @@ const get = () => async (_: Request, res: Response) => {
 export default function ping(routePath: string, app: Express) {
   app.get(routePath, get())
 }
+
+module.exports = ping

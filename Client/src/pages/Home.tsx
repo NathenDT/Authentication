@@ -1,9 +1,13 @@
+import { ResponseType } from '@backend/v1/user/get/withToken'
+
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 
+import axios, { AxiosError } from 'axios'
 import { useContext, useEffect, useState } from 'react'
 
 import {
+  AlertsContext,
   LoadingContext,
   TokenContext,
   WrapperTitleContext,
@@ -13,6 +17,7 @@ import getServerUrl from '../utils/getServerUrl'
 export default function Home() {
   const [token, setToken] = useContext(TokenContext)
   const [loading, setLoading] = useContext(LoadingContext)
+  const [alerts, setAlerts] = useContext(AlertsContext)
   const [, setTitleContext] = useContext(WrapperTitleContext)
 
   const [firstName, setFirstName] = useState('')
@@ -23,26 +28,48 @@ export default function Home() {
     ;(async function () {
       setTitleContext('Home')
       setLoading(true)
+      setAlerts([])
 
-      const response = await fetch(getServerUrl() + '/v1/user/get/withtoken', {
-        method: 'GET',
-        headers: new Headers({
-          Authorization: token,
-        }),
-      })
+      try {
+        const response = await axios.get(
+          getServerUrl() + '/v1/user/get/withtoken',
+          {
+            headers: {
+              Authorization: token,
+            },
+          }
+        )
 
-      const json = await response.json()
+        setLoading(false)
 
-      setLoading(false)
+        const {
+          first_name,
+          last_name,
+          username: _username,
+        } = response.data as ResponseType
 
-      if (!response.ok) {
+        setFirstName(first_name)
+        setLastName(last_name)
+        setUsername(_username)
+      } catch (error) {
+        const _error = error as AxiosError
+        const { response } = _error
+
+        setLoading(false)
+
+        if (!response) {
+          return setAlerts([
+            ...alerts,
+            {
+              severity: 'error',
+              message: 'An Error Occured, Please try again',
+            },
+          ])
+        }
+
         setToken('')
-        return localStorage.removeItem('token')
+        localStorage.removeItem('token')
       }
-
-      setFirstName(json.first_name)
-      setLastName(json.last_name)
-      setUsername(json.username)
     })()
   }, [])
 

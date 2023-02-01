@@ -6,5 +6,4 @@ export type UserDatabaseSchema = {
   username?: string
   password?: string
   created?: Date
-  verified?: boolean
 }

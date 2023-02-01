@@ -4,50 +4,57 @@ import { Connection, RowDataPacket } from 'mysql2/promise'
 
 import getIdFromToken from '../../../utils/getIdFromToken'
 
-import { ErrorResponse, UserDatabaseSchema } from '../index'
+import { ErrorResponseType, UserDatabaseSchema } from '../index'
 
-type UpdatePasswordRequestBody = {
+export type RequestBody = {
   new_password: string
 }
 
 const post = (database: Connection) => async (req: Request, res: Response) => {
-  const id = await getIdFromToken(
-    database,
-    req.headers.authorization as string,
-    true
-  )
+  try {
+    const id = await getIdFromToken(
+      database,
+      req.headers.authorization as string,
+      true
+    )
 
-  const { new_password }: UpdatePasswordRequestBody = req.body
+    const { new_password }: RequestBody = req.body
 
-  if (!id || !new_password) {
-    const response: ErrorResponse = { errorMessage: 'Bad Request' }
+    if (!id || !new_password) {
+      const response: ErrorResponseType = { errorMessage: 'Bad Request' }
 
+      return res.status(400).json(response)
+    }
+
+    const user = await getUser(database, id)
+
+    if (!user) {
+      const response: ErrorResponseType = {
+        errorMessage: 'Invalid Token',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    const encryptedPassword = await bcrypt.hash(new_password, 10)
+
+    const updateError = await updatePassword(database, id, encryptedPassword)
+
+    if (updateError) {
+      const response: ErrorResponseType = {
+        errorMessage: 'An Error Occured, Please Try Again Later',
+      }
+
+      return res.status(401).json(response)
+    }
+
+    res.end()
+  } catch (_) {
+    const response: ErrorResponseType = {
+      errorMessage: 'Something went wrong. Please try again later',
+    }
     return res.status(400).json(response)
   }
-
-  const user = await getUser(database, id)
-
-  if (!user) {
-    const response: ErrorResponse = {
-      errorMessage: 'Invalid Token',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  const encryptedPassword = await bcrypt.hash(new_password, 10)
-
-  const updateError = await updatePassword(database, id, encryptedPassword)
-
-  if (updateError) {
-    const response: ErrorResponse = {
-      errorMessage: 'An Error Occured, Please Try Again',
-    }
-
-    return res.status(401).json(response)
-  }
-
-  res.end()
 }
 
 export default function password(
@@ -85,3 +92,5 @@ async function updatePassword(
 
   return updateError
 }
+
+module.exports = password

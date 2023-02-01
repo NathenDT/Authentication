@@ -1,17 +1,29 @@
+import { ErrorResponseType } from '@backend/v1/'
+import {
+  RequestQueryType,
+  ResponseType,
+} from '@backend/v1/user/get/withUsername'
+
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 
+import axios, { AxiosError } from 'axios'
 import { useContext, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { LoadingContext, WrapperTitleContext } from '../utils/context'
+import {
+  AlertsContext,
+  LoadingContext,
+  WrapperTitleContext,
+} from '../utils/context'
 import getServerUrl from '../utils/getServerUrl'
 
 export default function User() {
   const [searchParams] = useSearchParams()
 
   const [loading, setLoading] = useContext(LoadingContext)
+  const [alerts, setAlerts] = useContext(AlertsContext)
   const [, setWrapperTitle] = useContext(WrapperTitleContext)
 
   const [firstName, setFirstName] = useState('')
@@ -21,23 +33,52 @@ export default function User() {
   useEffect(() => {
     ;(async function () {
       setLoading(true)
+      setAlerts([])
       setWrapperTitle('User')
 
-      const username = searchParams.get('username')
+      const username = searchParams.get('username') as string | undefined
 
-      const response = await fetch(
-        getServerUrl() + '/v1/user/get/withusername?username=' + username
-      )
+      const params: RequestQueryType = { username }
 
-      const json = await response.json()
+      try {
+        const response = await axios.get(
+          getServerUrl() + '/v1/user/get/withusername?username=' + username,
+          { params }
+        )
 
-      setLoading(false)
+        const {
+          first_name,
+          last_name,
+          username: _username,
+        } = response.data as ResponseType
 
-      if (!response.ok) return console.error(json)
+        setFirstName(first_name)
+        setLastName(last_name)
+        setUsername(_username)
+      } catch (error) {
+        const _error = error as AxiosError
+        const { response } = _error
 
-      setFirstName(json.first_name)
-      setLastName(json.last_name)
-      setUsername(json.username)
+        if (!response) {
+          return setAlerts([
+            ...alerts,
+            {
+              severity: 'error',
+              message: 'An Error Occured, Please try again',
+            },
+          ])
+        }
+
+        const { errorMessage } = response.data as ErrorResponseType
+
+        setAlerts([
+          ...alerts,
+          {
+            severity: 'error',
+            message: errorMessage,
+          },
+        ])
+      }
     })()
   }, [])
 

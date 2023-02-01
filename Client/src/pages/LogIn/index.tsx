@@ -1,4 +1,5 @@
-import { useContext, useEffect, useState } from 'react'
+import { ErrorResponseType } from '@backend/v1/'
+import { RequestBodyType, ResponseType } from '@backend/v1/user/logIn'
 
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -7,24 +8,27 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
+import axios, { AxiosError } from 'axios'
 import PasswordTextField from 'mui-passwordtextfield'
+import { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import ForgotPassword from './components/ForgotPasswordButton'
 
 import {
+  AlertsContext,
   LoadingContext,
   TokenContext,
   WrapperTitleContext,
 } from '../../utils/context'
 import getServerUrl from '../../utils/getServerUrl'
 import handleFormTextFieldChange from '../../utils/handleTextFieldChange/form'
-import isTextFieldFormOk from '../../utils/isTextFieldFormOk'
 import { FTFVDEFAULT } from '../../utils/textFieldDefault'
 
 export default function LogIn() {
   const navigate = useNavigate()
 
+  const [alerts, setAlerts] = useContext(AlertsContext)
   const [, setToken] = useContext(TokenContext)
   const [, setLoading] = useContext(LoadingContext)
   const [, setWrapperTitleContext] = useContext(WrapperTitleContext)
@@ -34,49 +38,66 @@ export default function LogIn() {
 
   const [rememberMe, setRememberMe] = useState(false)
 
-  const [error, setError] = useState('')
+  setWrapperTitleContext('Log In')
 
   const handleSubmit = async () => {
-    if (
-      !isTextFieldFormOk([
-        { state: username, setState: setUsername },
-        { state: password, setState: setPassword },
-      ])
-    )
-      return setError('Fix Errors')
-
+    setAlerts([])
     setLoading(true)
 
-    const request = await fetch(getServerUrl() + '/v1/user/login', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username.text,
-        password: password.text,
-      }),
-    })
+    const body: RequestBodyType = {
+      username: username.text,
+      password: password.text,
+    }
 
-    const json = await request.json()
+    try {
+      const response = await axios.post(
+        getServerUrl() + '/v1/user/login',
+        JSON.stringify(body),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: true,
+        }
+      )
 
-    setLoading(false)
+      setLoading(false)
 
-    if (!request.ok) return setError(json.errorMessage)
+      const { token } = response.data as ResponseType
 
-    setError('')
+      setToken(token)
+      if (rememberMe) localStorage.setItem('token', token)
 
-    const _token = json.token
+      setUsername(FTFVDEFAULT)
+      setPassword(FTFVDEFAULT)
+      setRememberMe(false)
 
-    setToken(_token)
+      navigate('/')
+    } catch (error) {
+      const _error = error as AxiosError
+      const response = _error.response
 
-    if (rememberMe) localStorage.setItem('token', _token)
+      setLoading(false)
 
-    navigate('/')
+      if (!response) {
+        return setAlerts([
+          ...alerts,
+          {
+            severity: 'error',
+            message: 'An Error Occured, Please try again',
+          },
+        ])
+      }
+
+      const { errorMessage } = response.data as ErrorResponseType
+
+      return setAlerts([
+        ...alerts,
+        {
+          severity: 'error',
+          message: errorMessage,
+        },
+      ])
+    }
   }
-
-  useEffect(() => setWrapperTitleContext('Log In'), [])
 
   return (
     <>
@@ -109,18 +130,22 @@ export default function LogIn() {
         sx={{ margin: 1, color: 'text.primary' }}
       />
 
-      <Button variant="contained" onClick={handleSubmit} sx={{ margin: 1 }}>
+      <Button
+        variant="contained"
+        onClick={handleSubmit}
+        sx={{ margin: 1 }}
+        disabled={
+          !Boolean(username.text) ||
+          Boolean(username.error) ||
+          !Boolean(password.text) ||
+          Boolean(username.error)
+        }
+      >
         Log In
       </Button>
 
-      {error && (
-        <Typography variant="body2" color="error" sx={{ margin: 1 }}>
-          {error}
-        </Typography>
-      )}
-
       <Box display="flex">
-        <ForgotPassword setError={setError} />
+        <ForgotPassword />
 
         <Box flexGrow={1}></Box>
 
