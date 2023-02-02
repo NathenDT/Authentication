@@ -42,7 +42,7 @@ export default function User() {
 
       try {
         const response = await axios.get(
-          getServerUrl() + '/v1/user/get/withusername?username=' + username,
+          getServerUrl() + '/v1/user/get/withusername',
           { params }
         )
 

@@ -26,6 +26,8 @@ MY_SQL_URL=[A MySQL Database URL]
 JWT_SECRET=[Any String]
 JWT_SECRET_FORGOT_PASSWORD=[Any String]
 WEBSITE_URL=[The URL of the website (http://localhost:3000 for development)]
+GMAIL_ADDRESS=[Gmail that send could Forgot Password email to users]
+GMAIL_PASSWORD=[The password to that Gmail]
 ```
 
 ### 4. Run the app:

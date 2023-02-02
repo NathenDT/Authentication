@@ -39,10 +39,7 @@ export default function App() {
 
       <Route path="/user" element={<User />} />
 
-      <Route
-        path="/changepassword"
-        element={Boolean(token) ? <Navigate to="/" /> : <ChangePassword />}
-      />
+      <Route path="/changepassword" element={<ChangePassword />} />
 
       <Route path="*" element={<NotFound />} />
     </Wrapper>
