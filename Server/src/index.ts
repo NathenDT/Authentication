@@ -17,13 +17,22 @@ const MY_SQL_URL = process.env.MY_SQL_URL as string
   const emailTransport = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'nathendtauthentication@gmail.com',
-      pass: 'rzderatxqozrarlt',
+      user: process.env.GMAIL_ADDRESS,
+      pass: process.env.GMAIL_PASSWORD,
     },
   })
 
   app.use(express.json())
-  app.use(cors())
+
+  const corsOpts: cors.CorsOptions = {
+    origin: '*',
+
+    methods: ['GET', 'POST'],
+
+    allowedHeaders: ['Content-Type'],
+  }
+
+  app.use(cors(corsOpts))
 
   createRoutes('routes', app, database, emailTransport)
 

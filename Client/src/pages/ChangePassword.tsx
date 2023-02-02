@@ -55,6 +55,8 @@ export default function ChangePassword() {
       setNewPassword(FTFVDEFAULT)
       setConfirmPassword(FTFVDEFAULT)
 
+      setLoading(false)
+
       return navigate('/login')
     } catch (error) {
       const _error = error as AxiosError
