@@ -24,15 +24,7 @@ const MY_SQL_URL = process.env.MY_SQL_URL as string
 
   app.use(express.json())
 
-  const corsOpts: cors.CorsOptions = {
-    origin: '*',
-
-    methods: ['GET', 'POST'],
-
-    allowedHeaders: ['Content-Type'],
-  }
-
-  app.use(cors(corsOpts))
+  app.use(cors())
 
   createRoutes('routes', app, database, emailTransport)
 
