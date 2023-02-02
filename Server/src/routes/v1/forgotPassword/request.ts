@@ -38,7 +38,7 @@ const get =
       )
 
       await emailTransport.sendMail({
-        from: 'nathendtauthentication@gmail.com',
+        from: process.env.GMAIL_ADDRESS,
         to: email,
         subject: 'Change Password',
         html: getEmailHTML(user, token),
