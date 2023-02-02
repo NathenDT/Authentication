@@ -12,6 +12,7 @@ import {
   AlertsContext,
   LoadingContext,
   TokenContext,
+  WrapperTitleContext,
 } from '../../utils/context'
 import getServerUrl from '../../utils/getServerUrl'
 
@@ -19,6 +20,7 @@ export default function Settings() {
   const [token, setToken] = useContext(TokenContext)
   const [, setLoading] = useContext(LoadingContext)
   const [alerts, setAlerts] = useContext(AlertsContext)
+  const [, setTitleContext] = useContext(WrapperTitleContext)
 
   const STFVDEFAULT: SettingsTextFieldValues = {
     text: '',
@@ -36,6 +38,7 @@ export default function Settings() {
     ;(async function () {
       setLoading(true)
       setAlerts([])
+      setTitleContext('Settings')
 
       try {
         const response = await axios.get(

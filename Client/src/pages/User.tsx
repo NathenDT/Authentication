@@ -55,6 +55,8 @@ export default function User() {
         setFirstName(first_name)
         setLastName(last_name)
         setUsername(_username)
+
+        setLoading(false)
       } catch (error) {
         const _error = error as AxiosError
         const { response } = _error
