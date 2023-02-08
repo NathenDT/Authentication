@@ -46,59 +46,38 @@ export default function UpdateUser({
     setLoading(true)
     setAlerts([])
 
-    try {
-      const response = await axios.post(
-        getServerUrl() + '/v1/user/update',
-        JSON.stringify(
-          settingFieldChanges(firstName, lastName, email, username)
-        ),
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: token,
-          },
-          withCredentials: true,
-        }
-      )
+    const response = await fetch(getServerUrl() + '/v1/user/update', {
+      method: 'POST',
+      body: JSON.stringify(
+        settingFieldChanges(firstName, lastName, email, username)
+      ),
+      headers: { 'Content-Type': 'application/json', Authorization: token },
+    })
 
-      setLoading(false)
+    setLoading(false)
+
+    if (!response.ok) {
+      const { errorMessage }: ErrorResponseType = await response.json()
+
+      setAlerts([
+        ...alerts,
+        {
+          severity: 'error',
+          message: errorMessage || 'An Error Occured, Please try again',
+        },
+      ])
 
       const {
         first_name,
         last_name,
         email: _email,
         username: _username,
-      } = response.data as ResponseType
+      }: ResponseType = await response.json()
 
       setFirstName({ ...firstName, original: first_name })
       setLastName({ ...lastName, original: last_name })
       setEmail({ ...email, original: _email })
       setUsername({ ...username, original: _username })
-    } catch (error) {
-      const _error = error as AxiosError
-      const { response } = _error
-
-      setLoading(false)
-
-      if (!response) {
-        return setAlerts([
-          ...alerts,
-          {
-            severity: 'error',
-            message: 'An Error Occured, Please try again',
-          },
-        ])
-      }
-
-      const { errorMessage } = response.data as ErrorResponseType
-
-      setAlerts([
-        ...alerts,
-        {
-          severity: 'error',
-          message: errorMessage,
-        },
-      ])
     }
   }
 

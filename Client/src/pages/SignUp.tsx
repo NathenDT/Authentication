@@ -53,54 +53,40 @@ export default function LogIn() {
       password: password.text,
     }
 
-    try {
-      const response = await axios.post(
-        getServerUrl() + '/v1/user/signup',
-        JSON.stringify(body),
-        {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true,
-        }
-      )
+    const response = await fetch(getServerUrl() + '/v1/user/signup', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    })
 
-      const { token: _token } = response.data as ResponseType
+    setLoading(false)
 
-      setToken(_token)
-      if (rememberMe) localStorage.setItem('token', _token)
+    if (!response.ok) {
+      const { errorMessage }: ErrorResponseType = await response.json()
 
-      setFirstName(FTFVDEFAULT)
-      setLastName(FTFVDEFAULT)
-      setEmail(FTFVDEFAULT)
-      setUsername(FTFVDEFAULT)
-      setPassword(FTFVDEFAULT)
-      setConfirmPassword(FTFVDEFAULT)
-      setRememberMe(false)
-
-      navigate('/')
-    } catch (error) {
-      const _error = error as AxiosError
-      const { response } = _error
-
-      if (!response) {
-        return setAlerts([
-          ...alerts,
-          {
-            severity: 'error',
-            message: 'An Error Occured, Please try again',
-          },
-        ])
-      }
-
-      const { errorMessage } = response.data as ErrorResponseType
-
-      setAlerts([
+      return setAlerts([
         ...alerts,
         {
           severity: 'error',
-          message: errorMessage,
+          message: errorMessage || 'An Error Occured, Please try again',
         },
       ])
     }
+
+    const { token }: ResponseType = await response.json()
+
+    setToken(token)
+    if (rememberMe) localStorage.setItem('token', token)
+
+    setFirstName(FTFVDEFAULT)
+    setLastName(FTFVDEFAULT)
+    setEmail(FTFVDEFAULT)
+    setUsername(FTFVDEFAULT)
+    setPassword(FTFVDEFAULT)
+    setConfirmPassword(FTFVDEFAULT)
+    setRememberMe(false)
+
+    navigate('/')
   }
 
   useEffect(() => setWrapperTitleContext('Sign Up'), [])

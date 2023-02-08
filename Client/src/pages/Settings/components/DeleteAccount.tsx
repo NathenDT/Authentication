@@ -45,51 +45,29 @@ export default function DeleteAccount() {
       password: password.text,
     }
 
-    try {
-      await axios.post(
-        getServerUrl() + '/v1/user/delete',
-        JSON.stringify(body),
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: token,
-          },
-          withCredentials: true,
-        }
-      )
+    const response = await fetch(getServerUrl() + '/v1/user/delete', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json', Authorization: token },
+    })
 
-      setLoading(false)
-      handleClose()
+    setLoading(false)
+    handleClose()
 
-      setToken('')
-      localStorage.removeItem('token')
-    } catch (error) {
-      const _error = error as AxiosError
-      const { response } = _error
+    if (!response.ok) {
+      const { errorMessage }: ErrorResponseType = await response.json()
 
-      setLoading(false)
-      handleClose()
-
-      if (!response) {
-        return setAlerts([
-          ...alerts,
-          {
-            severity: 'error',
-            message: 'An Error Occured, Please try again',
-          },
-        ])
-      }
-
-      const { errorMessage } = response.data as ErrorResponseType
-
-      setAlerts([
+      return setAlerts([
         ...alerts,
         {
           severity: 'error',
-          message: errorMessage,
+          message: errorMessage || 'An Error Occured, Please try again',
         },
       ])
     }
+
+    setToken('')
+    localStorage.removeItem('token')
   }
   return (
     <>

@@ -39,49 +39,33 @@ export default function ChangePassword() {
 
     const body: RequestBody = { new_password: newPassword.text }
 
-    try {
-      await axios.post(
-        getServerUrl() + '/v1/forgotpassword/changepassword',
-        JSON.stringify(body),
-        {
-          headers: {
-            Authorization: token,
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        }
-      )
-
-      setNewPassword(FTFVDEFAULT)
-      setConfirmPassword(FTFVDEFAULT)
-
-      setLoading(false)
-
-      return navigate('/login')
-    } catch (error) {
-      const _error = error as AxiosError
-      const { response } = _error
-
-      if (!response) {
-        return setAlerts([
-          ...alerts,
-          {
-            severity: 'error',
-            message: 'An Error Occured, Please try again',
-          },
-        ])
+    const response = await fetch(
+      getServerUrl() + '/v1/forgotpassword/changepassword',
+      {
+        body: JSON.stringify(body),
+        headers: {
+          Authorization: token,
+          'Content-Type': 'application/json',
+        },
       }
+    )
 
-      const { errorMessage } = response.data as ErrorResponseType
+    setLoading(false)
 
-      setAlerts([
+    if (!response.ok) {
+      const { errorMessage }: ErrorResponseType = await response.json()
+
+      return setAlerts([
         ...alerts,
         {
           severity: 'error',
-          message: errorMessage,
+          message: errorMessage || 'An Error Occured, Please try again',
         },
       ])
     }
+
+    setNewPassword(FTFVDEFAULT)
+    setConfirmPassword(FTFVDEFAULT)
   }
 
   useEffect(() => setWrapperTitle('Change Password'), [])

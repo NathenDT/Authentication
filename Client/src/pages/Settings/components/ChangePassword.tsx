@@ -46,55 +46,34 @@ export default function ChangePassword() {
       new_password: newPassword.text,
     }
 
-    try {
-      const response = await axios.post(
-        getServerUrl() + '/v1/user/update/password',
-        JSON.stringify(body),
-        {
-          headers: { Authorization: token, 'Content-Type': 'application/json' },
-          withCredentials: true,
-        }
-      )
+    const response = await fetch(getServerUrl() + '/v1/user/update/password', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { Authorization: token, 'Content-Type': 'application/json' },
+    })
 
-      setLoading(false)
-      handleClose()
-      setOldPassword(FTFVDEFAULT)
-      setNewPassword(FTFVDEFAULT)
-      setConfirmPassword(FTFVDEFAULT)
+    setLoading(false)
 
-      const { token: _token } = response.data as ResponseType
-
-      setToken(_token)
-    } catch (error) {
-      const _error = error as AxiosError
-      const response = _error.response
-
-      setLoading(false)
-      handleClose()
-      setOldPassword(FTFVDEFAULT)
-      setNewPassword(FTFVDEFAULT)
-      setConfirmPassword(FTFVDEFAULT)
-
-      if (!response) {
-        return setAlerts([
-          ...alerts,
-          {
-            severity: 'error',
-            message: 'An Error Occured, Please try again',
-          },
-        ])
-      }
-
-      const { errorMessage } = response.data as ErrorResponseType
+    if (!response.ok) {
+      const { errorMessage }: ErrorResponseType = await response.json()
 
       return setAlerts([
         ...alerts,
         {
           severity: 'error',
-          message: errorMessage,
+          message: errorMessage || 'An Error Occured, Please try again',
         },
       ])
     }
+
+    handleClose()
+    setOldPassword(FTFVDEFAULT)
+    setNewPassword(FTFVDEFAULT)
+    setConfirmPassword(FTFVDEFAULT)
+
+    const { token: _token }: ResponseType = await response.json()
+
+    setToken(_token)
   }
 
   return (
