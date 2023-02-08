@@ -1,12 +1,12 @@
 {
   "files": {
-    "main.js": "/Authentication/static/js/main.0449350f.js",
+    "main.js": "/Authentication/static/js/main.6e596af9.js",
     "static/js/787.c4e7f8f9.chunk.js": "/Authentication/static/js/787.c4e7f8f9.chunk.js",
     "index.html": "/Authentication/index.html",
-    "main.0449350f.js.map": "/Authentication/static/js/main.0449350f.js.map",
+    "main.6e596af9.js.map": "/Authentication/static/js/main.6e596af9.js.map",
     "787.c4e7f8f9.chunk.js.map": "/Authentication/static/js/787.c4e7f8f9.chunk.js.map"
   },
   "entrypoints": [
-    "static/js/main.0449350f.js"
+    "static/js/main.6e596af9.js"
   ]
 }
