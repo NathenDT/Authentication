@@ -33,11 +33,7 @@ export default function Home() {
       try {
         const response = await axios.get(
           getServerUrl() + '/v1/user/get/withtoken',
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
+          { headers: { Authorization: token } }
         )
 
         setLoading(false)

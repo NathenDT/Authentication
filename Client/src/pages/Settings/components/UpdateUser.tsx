@@ -66,19 +66,19 @@ export default function UpdateUser({
           message: errorMessage || 'An Error Occured, Please try again',
         },
       ])
-
-      const {
-        first_name,
-        last_name,
-        email: _email,
-        username: _username,
-      }: ResponseType = await response.json()
-
-      setFirstName({ ...firstName, original: first_name })
-      setLastName({ ...lastName, original: last_name })
-      setEmail({ ...email, original: _email })
-      setUsername({ ...username, original: _username })
     }
+
+    const {
+      first_name,
+      last_name,
+      email: _email,
+      username: _username,
+    }: ResponseType = await response.json()
+
+    setFirstName({ ...firstName, original: first_name })
+    setLastName({ ...lastName, original: last_name })
+    setEmail({ ...email, original: _email })
+    setUsername({ ...username, original: _username })
   }
 
   return (

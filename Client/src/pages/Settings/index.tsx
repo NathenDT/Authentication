@@ -43,7 +43,7 @@ export default function Settings() {
       try {
         const response = await axios.get(
           getServerUrl() + '/v1/user/get/withtoken',
-          { headers: { Authorization: token }, withCredentials: true }
+          { headers: { Authorization: token } }
         )
 
         setLoading(false)
